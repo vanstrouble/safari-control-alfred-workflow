@@ -10,6 +10,11 @@ validate_url() {
         return 1
     fi
 
+    # Check for spaces in the input (invalid for domains)
+    if [[ "$url" =~ [[:space:]] ]]; then
+        return 1
+    fi
+
     # Add http:// if no protocol specified
     if [[ ! "$url" =~ ^https?:// ]]; then
         url="http://$url"
