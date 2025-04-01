@@ -47,25 +47,23 @@ if [[ $# -gt 0 ]]; then
     fi
 fi
 
-# Check if Safari is running
-if ! pgrep -q "Safari"; then
-    # Safari is not running, start it
-    open -a "Safari"
-    # If there's no URL, exit here
-    if [[ -z "$URL" ]]; then
-        exit 0
+# Check if Safari is running (more reliable check)
+if ! ps -e | grep -q "[S]afari$"; then
+    # Safari is not running
+    if [[ -n "$URL" ]]; then
+        # Open Safari with the URL
+        open -a "Safari" "$URL"
+    else
+        # Just open Safari (which opens a window by default)
+        open -a "Safari"
     fi
-    # Wait a moment for Safari to start
-    sleep 0.5
-fi
-
-# Open a new window with or without a URL
-if [[ -z "$URL" ]]; then
-    # Without URL, just open a new window
-    osascript -e 'tell application "Safari" to make new document'
 else
-    # With URL, open a new window with that URL
-    osascript -e "tell application \"Safari\" to make new document with properties {URL:\"$URL\"}"
+    # Safari is already running, create a new window
+    if [[ -n "$URL" ]]; then
+        osascript -e "tell application \"Safari\" to make new document with properties {URL:\"$URL\"}"
+    else
+        osascript -e 'tell application "Safari" to make new document'
+    fi
 fi
 
 # Ensure Safari is in the foreground
