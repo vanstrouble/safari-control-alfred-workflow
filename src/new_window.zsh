@@ -33,8 +33,29 @@ validate_url() {
     return 0
 }
 
-# Check if a URL was provided and validate it
+# Initialize variables
 URL=""
+WINDOW_COUNT=1
+
+# Check if multiple windows are requested (x2, x3, etc.)
+if [[ $# -gt 0 && "$1" =~ ^x[0-9]+$ ]]; then
+    # Extract number after 'x'
+    WINDOW_COUNT=${1#x}
+
+    # Validate it's a positive number
+    if [[ ! "$WINDOW_COUNT" =~ ^[0-9]+$ || "$WINDOW_COUNT" -lt 1 ]]; then
+        echo "Invalid window count: $WINDOW_COUNT. Using 1 instead." >&2
+        WINDOW_COUNT=1
+    elif [ "$WINDOW_COUNT" -gt 10 ]; then
+        echo "Window count too high: $WINDOW_COUNT. Using 10 instead." >&2
+        WINDOW_COUNT=10
+    fi
+
+    # Remove the window count parameter
+    shift
+fi
+
+# Check if a URL was provided and validate it
 if [[ $# -gt 0 ]]; then
     input_url="$1"
     valid_url=$(validate_url "$input_url")
@@ -47,23 +68,43 @@ if [[ $# -gt 0 ]]; then
     fi
 fi
 
-# Check if Safari is running (more reliable check)
-if ! ps -e | grep -q "[S]afari$"; then
-    # Safari is not running
+# Check if Safari is running
+SAFARI_IS_RUNNING=false
+if ps -e | grep -q "[S]afari$"; then
+    SAFARI_IS_RUNNING=true
+fi
+
+# If Safari is not running, we need to handle it differently
+if ! $SAFARI_IS_RUNNING; then
+    # Open Safari (which creates the first window)
     if [[ -n "$URL" ]]; then
-        # Open Safari with the URL
         open -a "Safari" "$URL"
     else
-        # Just open Safari (which opens a window by default)
         open -a "Safari"
     fi
-else
-    # Safari is already running, create a new window
-    if [[ -n "$URL" ]]; then
-        osascript -e "tell application \"Safari\" to make new document with properties {URL:\"$URL\"}"
-    else
-        osascript -e 'tell application "Safari" to make new document'
+
+    # Wait a moment for Safari to start
+    sleep 0.5
+
+    # Create additional windows (one less since Safari already opened one)
+    if [[ $WINDOW_COUNT -gt 1 ]]; then
+        for ((i=2; i<=WINDOW_COUNT; i++)); do
+            if [[ -n "$URL" ]]; then
+                osascript -e "tell application \"Safari\" to make new document with properties {URL:\"$URL\"}"
+            else
+                osascript -e 'tell application "Safari" to make new document'
+            fi
+        done
     fi
+else
+    # Safari is already running, create the requested number of windows
+    for ((i=1; i<=WINDOW_COUNT; i++)); do
+        if [[ -n "$URL" ]]; then
+            osascript -e "tell application \"Safari\" to make new document with properties {URL:\"$URL\"}"
+        else
+            osascript -e 'tell application "Safari" to make new document'
+        fi
+    done
 fi
 
 # Ensure Safari is in the foreground
