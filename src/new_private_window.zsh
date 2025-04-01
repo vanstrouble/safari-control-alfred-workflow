@@ -33,8 +33,29 @@ validate_url() {
     return 0
 }
 
-# Check if a URL was provided and validate it
+# Initialize variables
 URL=""
+WINDOW_COUNT=1
+
+# Check if multiple windows are requested (x2, x3, etc.)
+if [[ $# -gt 0 && "$1" =~ ^x[0-9]+$ ]]; then
+    # Extract number after 'x'
+    WINDOW_COUNT=${1#x}
+
+    # Validate it's a positive number
+    if [[ ! "$WINDOW_COUNT" =~ ^[0-9]+$ || "$WINDOW_COUNT" -lt 1 ]]; then
+        echo "Invalid window count: $WINDOW_COUNT. Using 1 instead." >&2
+        WINDOW_COUNT=1
+    elif [ "$WINDOW_COUNT" -gt 10 ]; then
+        echo "Window count too high: $WINDOW_COUNT. Using 10 instead." >&2
+        WINDOW_COUNT=10
+    fi
+
+    # Remove the window count parameter
+    shift
+fi
+
+# Check if a URL was provided and validate it
 if [[ $# -gt 0 ]]; then
     input_url="$1"
     valid_url=$(validate_url "$input_url")
@@ -60,9 +81,12 @@ else
 fi
 
 # Check if Safari is running
-SAFARI_RUNNING=$(pgrep -q "Safari" && echo "true" || echo "false")
+SAFARI_RUNNING=false
+if ps -e | grep -q "[S]afari$"; then
+    SAFARI_RUNNING=true
+fi
 
-if [[ "$SAFARI_RUNNING" == "false" ]]; then
+if ! $SAFARI_RUNNING; then
     # Safari is not running, start it
     open -a "Safari"
     # Wait for Safari to start
@@ -83,26 +107,34 @@ EOD
     sleep 0.5
 fi
 
-# Click the menu item to open a private window
-osascript <<EOD
-tell application "System Events"
-    tell process "Safari"
-        click menu item "$NEW_PRIVATE_WINDOW" of menu "$FILE_MENU" of menu bar 1
+# Create the requested number of private windows
+for ((i=1; i<=WINDOW_COUNT; i++)); do
+    # Click the menu item to open a private window
+    osascript <<EOD
+    tell application "System Events"
+        tell process "Safari"
+            click menu item "$NEW_PRIVATE_WINDOW" of menu "$FILE_MENU" of menu bar 1
+        end tell
     end tell
-end tell
 EOD
+
+    # Give a moment for the window to open if we're creating multiple windows
+    if [[ $WINDOW_COUNT -gt 1 ]]; then
+        sleep 0.3
+    fi
+
+    # If URL was provided, set it in the front document
+    if [[ -n "$URL" ]]; then
+        # Give a moment for the window to open
+        sleep 0.3
+
+        osascript <<EOD
+        tell application "Safari"
+            set URL of front document to "$URL"
+        end tell
+EOD
+    fi
+done
 
 # Bring Safari to the front
 osascript -e 'tell application "Safari" to activate'
-
-# If URL was provided, set it in the front document
-if [[ -n "$URL" ]]; then
-    # Give a moment for the window to open
-    sleep 0.3
-
-    osascript <<EOD
-    tell application "Safari"
-        set URL of front document to "$URL"
-    end tell
-EOD
-fi
