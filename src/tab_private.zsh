@@ -7,6 +7,15 @@ if ! pgrep -q "Safari"; then
     exit 1
 fi
 
+# Check if Safari is the active (frontmost) application
+ACTIVE_APP=$(osascript -e 'tell application "System Events" to name of first application process whose frontmost is true')
+
+if [[ "$ACTIVE_APP" != "Safari" ]]; then
+    # Safari is running but not active
+    echo '{"items":[{"title":"Error","subtitle":"Safari must be the active application","valid":false}]}'
+    exit 1
+fi
+
 # Get the URL of the active tab using AppleScript
 CURRENT_URL=$(osascript <<EOF
 try
