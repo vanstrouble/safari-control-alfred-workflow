@@ -2,7 +2,8 @@
 
 # Check if Safari is running
 if ! pgrep -q "Safari"; then
-    echo "Safari is not running."
+    # Return JSON for Alfred with an error message
+    echo '{"items":[{"title":"Error","subtitle":"Safari is not running","valid":false}]}'
     exit 1
 fi
 
@@ -26,27 +27,30 @@ end try
 EOF
 )
 
+# Trim whitespace including newlines from the URL
+CURRENT_URL=$(echo "$CURRENT_URL" | tr -d '\n')
+
 # Check the result
 case "$CURRENT_URL" in
     "no_window")
-        echo "There are no open windows in Safari."
+        echo '{"items":[{"title":"Error","subtitle":"There are no open windows in Safari","valid":false}]}'
         exit 1
         ;;
     "no_url")
-        echo "The current tab has no URL (it may be a new empty tab)."
+        echo '{"items":[{"title":"Error","subtitle":"The current tab has no URL (may be a new empty tab)","valid":false}]}'
         exit 1
         ;;
     "error")
-        echo "Error retrieving the URL from Safari."
+        echo '{"items":[{"title":"Error","subtitle":"Error retrieving the URL from Safari","valid":false}]}'
         exit 1
         ;;
     "")
-        echo "Could not retrieve the URL."
+        echo '{"items":[{"title":"Error","subtitle":"Could not retrieve the URL","valid":false}]}'
         exit 1
         ;;
     *)
-        # If we reach here, we have a valid URL
-        echo "$CURRENT_URL"
+        # Para URLs válidas, solo emitimos la URL directamente para que Alfred la pase
+        echo -n "$CURRENT_URL"  # -n evita añadir un salto de línea adicional
         exit 0
         ;;
 esac
