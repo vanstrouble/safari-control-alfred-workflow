@@ -30,6 +30,24 @@ get_safari_tabs() {
 EOF
 }
 
+# Función para crear una cadena de coincidencia (match string) para Alfred
+create_match_string() {
+    local title="$1"
+    local url="$2"
+
+    # Eliminar protocolo para el match (como en list-tabs-webkit.js)
+    local match_url=$(echo "$url" | sed -E 's|^(https?:)?//||')
+
+    # Decodificar URL para mejor coincidencia
+    local decoded_url=$(python3 -c "import sys, urllib.parse; print(urllib.parse.unquote('$match_url'))" 2>/dev/null || echo "$match_url")
+
+    # Reemplazar caracteres no alfanuméricos con espacios (como en list-tabs-webkit.js)
+    local clean_url=$(echo "$decoded_url" | sed -E 's/[^a-zA-Z0-9]/ /g')
+
+    # Combinar título y URL para la coincidencia
+    echo "${title} ${clean_url}"
+}
+
 # Function to format tab items for Alfred JSON
 format_tab_items() {
     local tabs_list="$1"
@@ -45,9 +63,13 @@ format_tab_items() {
         local tabName=$(echo "$line" | awk -F'"' '{print $2}')
         local tabURL=$(echo "$line" | awk -F'"' '{print $4}')
 
+        # Create match string for Alfred filtering
+        local match_string=$(create_match_string "$tabName" "$tabURL")
+
         # Escape JSON special characters
         tabName=$(echo "$tabName" | sed 's/\\/\\\\/g; s/"/\\"/g')
         tabURL=$(echo "$tabURL" | sed 's/\\/\\\\/g; s/"/\\"/g')
+        match_string=$(echo "$match_string" | sed 's/\\/\\\\/g; s/"/\\"/g')
 
         # Add comma before item if not the first one
         if [ "$first" = true ]; then
@@ -56,13 +78,15 @@ format_tab_items() {
             echo -n ","
         fi
 
-        # Output item JSON
+        # Output item JSON with match property and quicklookurl like in list-tabs-webkit.js
         echo -n '{
             "uid": "'"$windowIndex"'",
             "title": "'"$tabName"'",
             "subtitle": "'"$tabURL"'",
             "arg": "'"$windowIndex,$tabURL"'",
-            "icon": {"path": "./icon.png"}
+            "icon": {"path": "./icon.png"},
+            "match": "'"$match_string"'",
+            "quicklookurl": "'"$tabURL"'"
         }'
     done
 }
