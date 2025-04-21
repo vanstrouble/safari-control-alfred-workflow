@@ -30,21 +30,43 @@ get_safari_tabs() {
 EOF
 }
 
-# Función para crear una cadena de coincidencia (match string) para Alfred
+# Function to create a match string for Alfred
 create_match_string() {
     local title="$1"
     local url="$2"
-
-    # Eliminar protocolo para el match (como en list-tabs-webkit.js)
     local match_url=$(echo "$url" | sed -E 's|^(https?:)?//||')
 
-    # Decodificar URL para mejor coincidencia
-    local decoded_url=$(python3 -c "import sys, urllib.parse; print(urllib.parse.unquote('$match_url'))" 2>/dev/null || echo "$match_url")
+    # Basic URL decoding (replace %20 with space, etc.)
+    # This is not as complete as Python but covers the most common cases
+    local decoded_url=$(echo "$match_url" |
+        sed -e 's/%20/ /g' \
+            -e 's/%21/!/g' \
+            -e 's/%22/"/g' \
+            -e 's/%23/#/g' \
+            -e 's/%24/$/g' \
+            -e 's/%25/%/g' \
+            -e 's/%26/\&/g' \
+            -e "s/%27/'/g" \
+            -e 's/%28/(/g' \
+            -e 's/%29/)/g' \
+            -e 's/%2[aA]/*/g' \
+            -e 's/%2[bB]/+/g' \
+            -e 's/%2[cC]/,/g' \
+            -e 's/%2[dD]/-/g' \
+            -e 's/%2[eE]/./g' \
+            -e 's/%2[fF]/\//g' \
+            -e 's/%3[aA]/:/g' \
+            -e 's/%3[bB]/;/g' \
+            -e 's/%3[cC]/</g' \
+            -e 's/%3[dD]/=/g' \
+            -e 's/%3[eE]/>/g' \
+            -e 's/%3[fF]/?/g' \
+            -e 's/%40/@/g')
 
-    # Reemplazar caracteres no alfanuméricos con espacios (como en list-tabs-webkit.js)
+    # Replace non-alphanumeric characters with spaces (as in list-tabs-webkit.js)
     local clean_url=$(echo "$decoded_url" | sed -E 's/[^a-zA-Z0-9]/ /g')
 
-    # Combinar título y URL para la coincidencia
+    # Combine title and URL for the match
     echo "${title} ${clean_url}"
 }
 
