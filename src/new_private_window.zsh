@@ -3,7 +3,7 @@
 # Function to validate URLs more rigorously but accept simple domains
 validate_url() {
     local input="$1"
-    local url="$input"
+    local url="$(echo "$input" | tr -d '\n\r' | xargs)"
 
     # If empty, return invalid
     if [[ -z "$url" ]]; then
