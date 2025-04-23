@@ -12,40 +12,17 @@ function run() {
     }
 
     try {
-        let safari = Application("Safari");
-        let items = [];
-        let tabsMap = {};  // We will use this to track unique URLs and count occurrences
+        const safari = Application("Safari");
+        const tabsMap = new Map();
+        const windowCount = safari.windows.length;
 
-        // Collect all tabs at once
-        let windowCount = safari.windows.length;
+        // Predefined regular expressions
+        const protocolRegex = /(^\w+:|^)\/\//;
+        const nonWordRegex = /[^\w]/g;
 
-        // First step: count all tabs with the same URL
+        // A single loop to process all tabs
         for (let i = 0; i < windowCount; i++) {
-            let window = safari.windows[i];
-            let tabsLength = window.tabs.length;
-
-            for (let j = 0; j < tabsLength; j++) {
-                try {
-                    let tab = window.tabs[j];
-                    let url = tab.url() || "about:blank";
-
-                    if (tabsMap[url]) {
-                        tabsMap[url].count++;
-                    } else {
-                        tabsMap[url] = {
-                            count: 1,
-                            processed: false
-                        };
-                    }
-                } catch (e) {
-                    continue;
-                }
-            }
-        }
-
-        // Second step: create the items for Alfred
-        for (let i = 0; i < windowCount; i++) {
-            let window = safari.windows[i];
+            const window = safari.windows[i];
             let windowIndex;
 
             try {
@@ -54,21 +31,24 @@ function run() {
                 windowIndex = i + 1;
             }
 
-            let tabsLength = window.tabs.length;
+            const tabsLength = window.tabs.length;
 
             for (let j = 0; j < tabsLength; j++) {
                 try {
-                    let tab = window.tabs[j];
-                    let title = tab.name() || "";
-                    let url = tab.url() || "about:blank";
+                    const tab = window.tabs[j];
+                    const title = tab.name() || "";
+                    const url = tab.url() || "about:blank";
 
-                    // Skip if we already processed this URL
-                    if (tabsMap[url].processed) {
+                    // If we already processed this URL, just increment the counter
+                    if (tabsMap.has(url)) {
+                        const data = tabsMap.get(url);
+                        data.count++;
+                        tabsMap.set(url, data);
                         continue;
                     }
 
-                    // Create match string for better search
-                    let matchUrl = url.replace(/(^\w+:|^)\/\//, "");
+                    // Process new URL
+                    const matchUrl = url.replace(protocolRegex, "");
                     let decodedUrl;
 
                     try {
@@ -77,33 +57,36 @@ function run() {
                         decodedUrl = matchUrl;
                     }
 
-                    let cleanUrl = decodedUrl.replace(/[^\w]/g, " ");
-                    let matchString = title + " " + cleanUrl;
+                    const cleanUrl = decodedUrl.replace(nonWordRegex, " ");
+                    const matchString = `${title} ${cleanUrl}`;
 
-                    // Create an informative subtitle
-                    let subtitle = url;
-                    if (tabsMap[url].count > 1) {
-                        subtitle += ` (${tabsMap[url].count} tabs)`;
-                    }
-
-                    // Add this tab to the items array
-                    let item = {
-                        uid: windowIndex + "-" + (j + 1),
-                        title: title,
-                        subtitle: subtitle,
-                        arg: url, // Only using URL as argument
-                        match: matchString,
-                        icon: { path: "./icon.png" },
-                        quicklookurl: url
-                    };
-
-                    items.push(item);
-                    tabsMap[url].processed = true; // Mark this URL as processed
+                    // Save information in the map
+                    tabsMap.set(url, {
+                        count: 1,
+                        item: {
+                            uid: `${windowIndex}-${j + 1}`,
+                            title: title,
+                            subtitle: url,
+                            arg: url,
+                            match: matchString,
+                            icon: { path: "./icon.png" },
+                            quicklookurl: url
+                        }
+                    });
                 } catch (e) {
-                    continue; // Skip this tab if there is an error
+                    continue;
                 }
             }
         }
+
+        // Create final array of items
+        const items = Array.from(tabsMap.values()).map(data => {
+            const item = data.item;
+            if (data.count > 1) {
+                item.subtitle = `${item.subtitle} (${data.count} tabs)`;
+            }
+            return item;
+        });
 
         // If there are no tabs
         if (items.length === 0) {
@@ -116,7 +99,7 @@ function run() {
             });
         }
 
-        return JSON.stringify({ items: items });
+        return JSON.stringify({ items });
     } catch (e) {
         return JSON.stringify({
             items: [{
