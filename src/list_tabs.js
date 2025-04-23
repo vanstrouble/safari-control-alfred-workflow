@@ -1,3 +1,5 @@
+#!/usr/bin/env osascript -l JavaScript
+
 function run() {
     if (!Application("Safari").running()) {
         return JSON.stringify({
@@ -51,7 +53,7 @@ function run() {
                         subtitle: url,
                         arg: windowIndex + "," + url,
                         match: matchString,
-                        icon: { path: "./img/safari-icon.png" },
+                        icon: { path: "./icon.png" },
                         quicklookurl: url
                     });
                 } catch (e) {
