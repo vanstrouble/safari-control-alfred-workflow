@@ -14,9 +14,37 @@ function run() {
     try {
         let safari = Application("Safari");
         let items = [];
+        let tabsMap = {};  // We will use this to track unique URLs and count occurrences
 
-        // Iterate through all windows
-        for (let i = 0; i < safari.windows.length; i++) {
+        // Collect all tabs at once
+        let windowCount = safari.windows.length;
+
+        // First step: count all tabs with the same URL
+        for (let i = 0; i < windowCount; i++) {
+            let window = safari.windows[i];
+            let tabsLength = window.tabs.length;
+
+            for (let j = 0; j < tabsLength; j++) {
+                try {
+                    let tab = window.tabs[j];
+                    let url = tab.url() || "about:blank";
+
+                    if (tabsMap[url]) {
+                        tabsMap[url].count++;
+                    } else {
+                        tabsMap[url] = {
+                            count: 1,
+                            processed: false
+                        };
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+        }
+
+        // Second step: create the items for Alfred
+        for (let i = 0; i < windowCount; i++) {
             let window = safari.windows[i];
             let windowIndex;
 
@@ -26,12 +54,18 @@ function run() {
                 windowIndex = i + 1;
             }
 
-            // Iterate through all tabs in this window
-            for (let j = 0; j < window.tabs.length; j++) {
+            let tabsLength = window.tabs.length;
+
+            for (let j = 0; j < tabsLength; j++) {
                 try {
                     let tab = window.tabs[j];
                     let title = tab.name() || "";
                     let url = tab.url() || "about:blank";
+
+                    // Skip if we already processed this URL
+                    if (tabsMap[url].processed) {
+                        continue;
+                    }
 
                     // Create match string for better search
                     let matchUrl = url.replace(/(^\w+:|^)\/\//, "");
@@ -46,16 +80,25 @@ function run() {
                     let cleanUrl = decodedUrl.replace(/[^\w]/g, " ");
                     let matchString = title + " " + cleanUrl;
 
-                    // Add this tab to the array
-                    items.push({
+                    // Create an informative subtitle
+                    let subtitle = url;
+                    if (tabsMap[url].count > 1) {
+                        subtitle += ` (${tabsMap[url].count} tabs)`;
+                    }
+
+                    // Add this tab to the items array
+                    let item = {
                         uid: windowIndex + "-" + (j + 1),
                         title: title,
-                        subtitle: url,
-                        arg: windowIndex + "," + url,
+                        subtitle: subtitle,
+                        arg: url, // Only using URL as argument
                         match: matchString,
                         icon: { path: "./icon.png" },
                         quicklookurl: url
-                    });
+                    };
+
+                    items.push(item);
+                    tabsMap[url].processed = true; // Mark this URL as processed
                 } catch (e) {
                     continue; // Skip this tab if there is an error
                 }
