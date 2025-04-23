@@ -3,7 +3,7 @@
 # Function to validate URLs more rigorously but accept simple domains
 validate_url() {
     local input="$1"
-    local url="$input"
+    local url="$(echo "$input" | tr -d '\n\r' | xargs)"
 
     # If empty, return invalid
     if [[ -z "$url" ]]; then
@@ -33,9 +33,71 @@ validate_url() {
     return 0
 }
 
+# Function to open Safari with a specific profile
+open_safari_with_profile() {
+    local profile_num="$1"
+    local url="$2"
+    local window_count="$3"
+
+    # Ensure profile number is valid (1-3)
+    if [[ ! "$profile_num" =~ ^[1-3]$ ]]; then
+        echo "Invalid profile number: $profile_num. Must be 1, 2, or 3." >&2
+        return 1
+    fi
+
+    # Check if Safari is running
+    local safari_running=false
+    if ps -e | grep -q "[S]afari$"; then
+        safari_running=true
+    fi
+
+    # If Safari is not running, start it
+    if ! $safari_running; then
+        open -a "Safari"
+        sleep 0.5
+    fi
+
+    # Activate Safari and bring it to the foreground
+    osascript -e 'tell application "Safari" to activate'
+    sleep 0.2
+
+    # Open the requested number of windows with the selected profile
+    for ((i=1; i<=window_count; i++)); do
+        # Use keyboard shortcut to switch to the selected profile
+        # Option + Shift + Command + n where n is the profile number
+        osascript <<EOD
+        tell application "System Events"
+            tell process "Safari"
+                set frontmost to true
+                keystroke "$profile_num" using {option down, shift down, command down}
+                delay 0.3
+            end tell
+        end tell
+EOD
+
+        # If URL was provided, set it in the newly created window
+        if [[ -n "$url" ]]; then
+            sleep 0.3
+            osascript <<EOD
+            tell application "Safari"
+                set URL of front document to "$url"
+            end tell
+EOD
+        fi
+
+        # If we're creating multiple windows, add a small delay
+        if [[ $window_count -gt 1 ]]; then
+            sleep 0.3
+        fi
+    done
+
+    return 0
+}
+
 # Initialize variables
 URL=""
 WINDOW_COUNT=1
+PROFILE=""
 
 # Check if multiple windows are requested (x2, x3, etc.)
 if [[ $# -gt 0 && "$1" =~ ^x[0-9]+$ ]]; then
@@ -55,6 +117,13 @@ if [[ $# -gt 0 && "$1" =~ ^x[0-9]+$ ]]; then
     shift
 fi
 
+# Check if a profile was requested (p1, p2, p3)
+if [[ $# -gt 0 && "$1" =~ ^p[1-3]$ ]]; then
+    # Extract profile number
+    PROFILE=${1#p}
+    shift
+fi
+
 # Check if a URL was provided and validate it
 if [[ $# -gt 0 ]]; then
     input_url="$1"
@@ -68,7 +137,13 @@ if [[ $# -gt 0 ]]; then
     fi
 fi
 
-# Check if Safari is running
+# If a profile was specified, use that function
+if [[ -n "$PROFILE" ]]; then
+    open_safari_with_profile "$PROFILE" "$URL" "$WINDOW_COUNT"
+    exit $?
+fi
+
+# Otherwise, continue with the existing functionality
 SAFARI_IS_RUNNING=false
 if ps -e | grep -q "[S]afari$"; then
     SAFARI_IS_RUNNING=true
