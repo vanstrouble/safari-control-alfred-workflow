@@ -31,50 +31,25 @@ function run() {
                 windowIndex = i + 1;
             }
 
+            if (!window.tabs || window.tabs.length === 0) continue;
+
             const tabsLength = window.tabs.length;
 
             for (let j = 0; j < tabsLength; j++) {
-                try {
-                    const tab = window.tabs[j];
-                    const title = tab.name() || "";
-                    const url = tab.url() || "about:blank";
+                // Process the tab using the helper function
+                const tabData = getTabData(window, j, windowIndex, protocolRegex, nonWordRegex);
+                if (!tabData) continue;
 
-                    // If we already processed this URL, just increment the counter
-                    if (tabsMap.has(url)) {
-                        const data = tabsMap.get(url);
-                        data.count++;
-                        tabsMap.set(url, data);
-                        continue;
-                    }
+                const { url, data } = tabData;
 
-                    // Process new URL
-                    const matchUrl = url.replace(protocolRegex, "");
-                    let decodedUrl;
-
-                    try {
-                        decodedUrl = decodeURIComponent(matchUrl);
-                    } catch (e) {
-                        decodedUrl = matchUrl;
-                    }
-
-                    const cleanUrl = decodedUrl.replace(nonWordRegex, " ");
-                    const matchString = `${title} ${cleanUrl}`;
-
-                    // Save information in the map
-                    tabsMap.set(url, {
-                        count: 1,
-                        item: {
-                            uid: `${windowIndex}-${j + 1}`,
-                            title: title,
-                            subtitle: url,
-                            arg: url,
-                            match: matchString,
-                            icon: { path: "./icon.png" },
-                            quicklookurl: url
-                        }
-                    });
-                } catch (e) {
-                    continue;
+                // If we already processed this URL, just increment the counter
+                if (tabsMap.has(url)) {
+                    const existingData = tabsMap.get(url);
+                    existingData.count++;
+                    tabsMap.set(url, existingData);
+                } else {
+                    // Save new entry in the map
+                    tabsMap.set(url, data);
                 }
             }
         }
@@ -108,5 +83,45 @@ function run() {
                 valid: false
             }]
         });
+    }
+}
+
+// Helper function to process tab data
+function getTabData(window, tabIndex, windowIndex, protocolRegex, nonWordRegex) {
+    try {
+        const tab = window.tabs[tabIndex];
+        const title = tab.name() || "";
+        const url = tab.url() || "about:blank";
+
+        // Process URL
+        const matchUrl = url.replace(protocolRegex, "");
+        let decodedUrl;
+
+        try {
+            decodedUrl = decodeURIComponent(matchUrl);
+        } catch (e) {
+            decodedUrl = matchUrl;
+        }
+
+        const cleanUrl = decodedUrl.replace(nonWordRegex, " ");
+        const matchString = `${title} ${cleanUrl}`;
+
+        return {
+            url,
+            data: {
+                count: 1,
+                item: {
+                    uid: `${windowIndex}-${tabIndex + 1}`,
+                    title: title,
+                    subtitle: url,
+                    arg: url,
+                    match: matchString,
+                    icon: { path: "./icon.png" },
+                    quicklookurl: url
+                }
+            }
+        };
+    } catch (e) {
+        return null;
     }
 }
