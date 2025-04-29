@@ -60,16 +60,9 @@ This command extracts the current tab (the one you are currently viewing) and op
 
 ## Customization
 
-This workflow is highly customizable to fit your specific needs. You can adjust the following:
-
-### Keywords
-You can change the default keywords (`sw`, `swp`, `swt`, `stp`) to better suit your workflow.
-
-### Hotkeys
-Assign hotkeys to trigger any workflow function without typing keywords.
-
-### Profile Names
-Rename the default profiles (`p1`, `p2`, `p3`) to match your Safari profile names.
+- **Keywords**: You can change the default keywords (`sw`, `swp`, `swt`, `stp`) to better suit your workflow.
+- **Hotkeys**: Assign hotkeys to trigger any workflow function without typing keywords.
+- **Profile Names**: Rename the default profiles (`p1`, `p2`, `p3`) to match your Safari profile names.
 
 To customize these settings, access the workflow's configuration options directly in Alfred during or after installation.
 
