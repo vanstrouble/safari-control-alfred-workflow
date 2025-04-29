@@ -1,6 +1,6 @@
 # <img src="img/safari-icon.png" alt="Alfred Safari Window Workflow" align="center" width="45"/> Safari Control | Alfred Workflow
 
-A powerful Alfred workflow to manage Safari efficiently. Safari Manager allows you to create new windows, open private browsing sessions, switch between profiles, and quickly navigate through your open tabs—all without leaving Alfred.
+A powerful Alfred workflow to manage Safari efficiently. Safari Control allows you to create new windows, open private browsing sessions, switch between profiles, and quickly navigate through your open tabs—all without leaving Alfred.
 
 ## Install
 
