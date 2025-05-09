@@ -6,7 +6,7 @@ A powerful Alfred workflow to manage Safari efficiently. Safari Control allows y
 
 - Get the latest release on GitHub [here](https://github.com/vanstrouble/new-safari-window-alfred-workflow/releases).
 
-**This workflow is only for Alfred.app Powerpack users.**
+**This workflow is only for Alfred Powerpack users.**
 
 ## Getting Started
 
