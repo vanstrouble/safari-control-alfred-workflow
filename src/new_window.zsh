@@ -39,9 +39,9 @@ open_safari_with_profile() {
     local url="$2"
     local window_count="$3"
 
-    # Ensure profile number is valid (1-3)
-    if [[ ! "$profile_num" =~ ^[1-3]$ ]]; then
-        echo "Invalid profile number: $profile_num. Must be 1, 2, or 3." >&2
+    # Ensure profile number is valid (1-5)
+    if [[ ! "$profile_num" =~ ^[1-5]$ ]]; then
+        echo "Invalid profile number: $profile_num. Must be 1, 2, 3, 4, or 5." >&2
         return 1
     fi
 
@@ -117,8 +117,8 @@ if [[ $# -gt 0 && "$1" =~ ^x[0-9]+$ ]]; then
     shift
 fi
 
-# Check if a profile was requested (p1, p2, p3)
-if [[ $# -gt 0 && "$1" =~ ^p[1-3]$ ]]; then
+# Check if a profile was requested (p1, p2, p3, p4, p5)
+if [[ $# -gt 0 && "$1" =~ ^p[1-5]$ ]]; then
     # Extract profile number
     PROFILE=${1#p}
     shift
