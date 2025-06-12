@@ -5,7 +5,7 @@ Open new Safari windows anywhere, sneak into private browsing, switch profiles l
 ## Download
 
 - Available on the Alfred Gallery. [Get it here](https://alfred.app/workflows/vanstrouble/safari-control/).
-- You can also download it directly from GitHub [here](https://github.com/vanstrouble/new-safari-window-alfred-workflow/releases).
+- You can also download it directly from GitHub [here](https://github.com/vanstrouble/new-safari-window-alfred-workflow/releases/latest).
 
 ## Usage
 
