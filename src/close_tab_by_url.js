@@ -18,12 +18,11 @@ function run(argv) {
         }
         if (!isPrivate) {
             var tabs = win.tabs();
-            for (var i = 0; i < tabs.length; i++) {
+            for (var i = tabs.length - 1; i >= 0; i--) {
                 var tabUrl = (tabs[i].url() || '').trim();
                 if (tabUrl === targetUrl) {
                     tabs[i].close();
                     closed = true;
-                    break;
                 }
             }
         }
