@@ -4,8 +4,8 @@ Open new Safari windows anywhere, sneak into private browsing, switch profiles l
 
 ## Download
 
-- Available on the Alfred Gallery. Get it [here](https://alfred.app/workflows/vanstrouble/safari-control/).
-- You can also download it from GitHub [here](https://github.com/vanstrouble/new-safari-window-alfred-workflow/releases).
+- Available on the Alfred Gallery. [Get it here](https://alfred.app/workflows/vanstrouble/safari-control/).
+- You can also download it directly from GitHub [here](https://github.com/vanstrouble/new-safari-window-alfred-workflow/releases).
 
 ## Usage
 
@@ -13,7 +13,11 @@ Open new Safari windows anywhere, sneak into private browsing, switch profiles l
 
 <img src="img/sw.png" alt="Alfred new Safari window" width="570"/>
 
-Opens a new Safari window in the current space. By default, pressing the **Command** key will open a **new private window**.
+Opens a new Safari window in the current space.
+
+- **Keyword:** `sw`
+
+Hold the **Command (⌘)** key while using the `sw` command to open a **new private window**.
 
 #### Examples:
 
@@ -28,16 +32,22 @@ Opens a new Safari window in the current space. By default, pressing the **Comma
 
 <img src="img/swp.png" alt="Alfred Safari profiles" width="570"/>
 
-List and open Safari windows using up to 3 customizable profiles (e.g., work, personal, testing). Use `sw p[number]` to instantly open a new Safari window with the selected profile.
+List and open Safari windows using up to 5 customizable profiles (e.g., work, personal, school).
+
+- **Keyword:** `swp`
+
+Use `sw p[number]` to instantly open a new Safari window with the selected profile.
 
 #### Examples:
 
 | Command         | Description                                                                 |
 |-----------------|-----------------------------------------------------------------------------|
-| `swp`           | Lists available profiles (Profile 1, Profile 2, Profile 3).                |
+| `swp`           | Lists available profiles (Profile 1, …, Profile 5).                |
 | `sw p1`        | Opens a new Safari window using Profile 1.                                 |
 | `sw p2`        | Opens a new Safari window using Profile 2.                                 |
 | `sw p3`        | Opens a new Safari window using Profile 3.                                 |
+
+**Note:** Profiles without assigned names in the workflow configuration won't appear in the list, allowing for a cleaner interface with only the profiles you actually use.
 
 ### List Safari tabs (swt)
 
@@ -45,11 +55,25 @@ List and open Safari windows using up to 3 customizable profiles (e.g., work, pe
 
 Browse all open Safari tabs and search by title or URL to instantly bring the one you need into focus.
 
+- **Keyword:** `swt`
+
+### Copy current tab URL (swu)
+
+<img src="img/swu.png" alt="Alfred Safari copy URL" width="570"/>
+
+Copies the URL of the currently focused Safari tab directly to your clipboard, allowing for quick sharing or referencing.
+
+- **Keyword:** `swu`
+
 ### Open current tab in private mode (stp)
 
 <img src="img/stp.png" alt="Alfred Safari private tab" width="570"/>
 
 Extracts the current tab (the one you are currently viewing) and opens it in a new private browsing window.
+
+- **Keyword:** `stp`
+
+Hold the **Command (⌘)** key while using the stp command to also close the tab in the normal browsing windows.
 
 ## Customization
 
