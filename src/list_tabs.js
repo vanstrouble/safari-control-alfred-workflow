@@ -1,7 +1,10 @@
 #!/usr/bin/env osascript -l JavaScript
 
 function run() {
-    if (!Application("Safari").running()) {
+    // Cache Safari application object to reduce overhead
+    const safari = Application("Safari");
+
+    if (!safari.running()) {
         return JSON.stringify({
             items: [{
                 title: "Safari is not running",
@@ -12,9 +15,10 @@ function run() {
     }
 
     try {
-        const safari = Application("Safari");
         const tabsMap = new Map();
-        const windowCount = safari.windows.length;
+        // Cache windows length to avoid repeated property access
+        const windows = safari.windows;
+        const windowCount = windows.length;
 
         // Predefined regular expressions
         const protocolRegex = /(^\w+:|^)\/\//;
@@ -22,7 +26,7 @@ function run() {
 
         // A single loop to process all tabs
         for (let i = 0; i < windowCount; i++) {
-            const window = safari.windows[i];
+            const window = windows[i];
             let windowIndex;
 
             try {
