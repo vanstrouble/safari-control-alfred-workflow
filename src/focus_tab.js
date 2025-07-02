@@ -44,6 +44,8 @@ function run(argv) {
             // Activate Safari first
             safari.activate();
 
+            delay(0.2); // Allow Safari to activate
+
             // Simply make the window the frontmost window without toggling visibility
             foundWindow.index = 1; // This makes the window the frontmost window
 
