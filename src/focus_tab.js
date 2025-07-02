@@ -13,7 +13,7 @@ function run(argv) {
                 if (matchingTabs.length > 0) {
                     // Found it! Activate immediately
                     safari.activate();
-                    delay(0.2);
+                    // delay(0.2);
                     window.index = 1;
                     window.currentTab = matchingTabs[0];
                     return "Tab focused successfully";

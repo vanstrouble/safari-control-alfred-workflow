@@ -54,42 +54,39 @@ function run() {
 
     try {
         const tabsMap = new Map();
+        const items = []; // Pre-allocate final array
 
         // Predefined regular expressions
         const protocolRegex = /(^\w+:|^)\/\//;
         const nonWordRegex = /[^\w]/g;
 
-        // Optimized loop using for...of
-        for (const window of safari.windows()) {
+        // Single-pass processing: build map and array simultaneously
+        const windows = safari.windows();
+        for (const window of windows) {
             for (const tab of window.tabs()) {
-                // Process the tab directly
                 const tabData = getTabData(tab, protocolRegex, nonWordRegex);
                 if (!tabData) continue;
 
                 const { url, data } = tabData;
 
-                // If we already processed this URL, just increment the counter
                 if (tabsMap.has(url)) {
+                    // URL already exists: increment count and update existing item
                     const existingData = tabsMap.get(url);
                     existingData.count++;
-                    tabsMap.set(url, existingData);
+
+                    // Update the item subtitle directly in the items array
+                    const existingItem = existingData.item;
+                    existingItem.subtitle = existingItem.subtitle.replace(/ \(\d+ tabs\)$/, '') + ` (${existingData.count} tabs)`;
+
                 } else {
-                    // Save new entry in the map
+                    // New URL: add to map and items array
                     tabsMap.set(url, data);
+                    items.push(data.item);
                 }
             }
         }
 
-        // Create final array of items
-        const items = Array.from(tabsMap.values()).map(data => {
-            const item = data.item;
-            if (data.count > 1) {
-                item.subtitle = `${item.subtitle} (${data.count} tabs)`;
-            }
-            return item;
-        });
-
-        // If there are no tabs
+        // Early return for empty results
         if (items.length === 0) {
             return JSON.stringify({
                 items: [{
@@ -101,6 +98,7 @@ function run() {
         }
 
         return JSON.stringify({ items });
+
     } catch (e) {
         return JSON.stringify({
             items: [{
