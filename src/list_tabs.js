@@ -1,5 +1,43 @@
 #!/usr/bin/env osascript -l JavaScript
 
+// Helper function to process tab data
+function getTabData(tab, protocolRegex, nonWordRegex) {
+    try {
+        const title = tab.name() || "";
+        const url = tab.url() || "about:blank";
+
+        // Process URL
+        const matchUrl = url.replace(protocolRegex, "");
+        let decodedUrl;
+
+        try {
+            decodedUrl = decodeURIComponent(matchUrl);
+        } catch (e) {
+            decodedUrl = matchUrl;
+        }
+
+        const cleanUrl = decodedUrl.replace(nonWordRegex, " ");
+        const matchString = `${title} ${cleanUrl}`;
+
+        return {
+            url,
+            data: {
+                count: 1,
+                item: {
+                    title: title,
+                    subtitle: url,
+                    arg: url,
+                    match: matchString,
+                    icon: { path: "./icon.png" },
+                    quicklookurl: url
+                }
+            }
+        };
+    } catch (e) {
+        return null;
+    }
+}
+
 function run() {
     // Cache Safari application object to reduce overhead
     const safari = Application("Safari");
@@ -16,32 +54,16 @@ function run() {
 
     try {
         const tabsMap = new Map();
-        // Cache windows length to avoid repeated property access
-        const windows = safari.windows;
-        const windowCount = windows.length;
 
         // Predefined regular expressions
         const protocolRegex = /(^\w+:|^)\/\//;
         const nonWordRegex = /[^\w]/g;
 
-        // A single loop to process all tabs
-        for (let i = 0; i < windowCount; i++) {
-            const window = windows[i];
-            let windowIndex;
-
-            try {
-                windowIndex = window.index();
-            } catch (e) {
-                windowIndex = i + 1;
-            }
-
-            if (!window.tabs || window.tabs.length === 0) continue;
-
-            const tabsLength = window.tabs.length;
-
-            for (let j = 0; j < tabsLength; j++) {
-                // Process the tab using the helper function
-                const tabData = getTabData(window, j, windowIndex, protocolRegex, nonWordRegex);
+        // Optimized loop using for...of
+        for (const window of safari.windows()) {
+            for (const tab of window.tabs()) {
+                // Process the tab directly
+                const tabData = getTabData(tab, protocolRegex, nonWordRegex);
                 if (!tabData) continue;
 
                 const { url, data } = tabData;
@@ -87,45 +109,5 @@ function run() {
                 valid: false
             }]
         });
-    }
-}
-
-// Helper function to process tab data
-function getTabData(window, tabIndex, windowIndex, protocolRegex, nonWordRegex) {
-    try {
-        const tab = window.tabs[tabIndex];
-        const title = tab.name() || "";
-        const url = tab.url() || "about:blank";
-
-        // Process URL
-        const matchUrl = url.replace(protocolRegex, "");
-        let decodedUrl;
-
-        try {
-            decodedUrl = decodeURIComponent(matchUrl);
-        } catch (e) {
-            decodedUrl = matchUrl;
-        }
-
-        const cleanUrl = decodedUrl.replace(nonWordRegex, " ");
-        const matchString = `${title} ${cleanUrl}`;
-
-        return {
-            url,
-            data: {
-                count: 1,
-                item: {
-                    uid: `${windowIndex}-${tabIndex + 1}`,
-                    title: title,
-                    subtitle: url,
-                    arg: url,
-                    match: matchString,
-                    icon: { path: "./icon.png" },
-                    quicklookurl: url
-                }
-            }
-        };
-    } catch (e) {
-        return null;
     }
 }
