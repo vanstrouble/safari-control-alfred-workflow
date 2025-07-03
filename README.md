@@ -16,8 +16,7 @@ Open new Safari windows anywhere, sneak into private browsing, switch profiles l
 Opens a new Safari window in the current space.
 
 - **Keyword:** `sw`
-
-Hold the **Command (⌘)** key while using the `sw` command to open a **new private window**.
+  - <kbd>⌘</kbd><kbd>↩</kbd> Open a new private window
 
 #### Examples:
 
@@ -56,6 +55,8 @@ Use `sw p[number]` to instantly open a new Safari window with the selected profi
 Browse all open Safari tabs and search by title or URL to instantly bring the one you need into focus.
 
 - **Keyword:** `swt`
+  - <kbd>⌘</kbd><kbd>↩</kbd> Copy the URL of the tab
+  - <kbd>⌃</kbd><kbd>↩</kbd> Close the tab
 
 ### Copy current tab URL (swu)
 
@@ -72,8 +73,7 @@ Copies the URL of the currently focused Safari tab directly to your clipboard, a
 Extracts the current tab (the one you are currently viewing) and opens it in a new private browsing window.
 
 - **Keyword:** `stp`
-
-Hold the **Command (⌘)** key while using the stp command to also close the tab in the normal browsing windows.
+  - <kbd>⌘</kbd><kbd>↩</kbd> Close the tab in the normal browsing windows.
 
 ## Customization
 
