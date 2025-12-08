@@ -1,113 +1,51 @@
-#!/usr/bin/env osascript -l JavaScript
-
-// Helper function to process tab data
-function getTabData(tab, protocolRegex, nonWordRegex) {
-    try {
-        const title = tab.name() || "";
-        const url = tab.url() || "about:blank";
-
-        // Process URL
-        const matchUrl = url.replace(protocolRegex, "");
-        let decodedUrl;
-
-        try {
-            decodedUrl = decodeURIComponent(matchUrl);
-        } catch (e) {
-            decodedUrl = matchUrl;
-        }
-
-        const cleanUrl = decodedUrl.replace(nonWordRegex, " ");
-        const matchString = `${title} ${cleanUrl}`;
-
-        return {
-            url,
-            data: {
-                count: 1,
-                item: {
-                    title: title,
-                    subtitle: url,
-                    arg: url,
-                    match: matchString,
-                    autocomplete: title,
-                    valid: true,
-                    icon: { path: "./icon.png" },
-                    quicklookurl: url
-                }
-            }
-        };
-    } catch (e) {
-        return null;
-    }
+function envVar(varName) {
+	return $.NSProcessInfo.processInfo.environment.objectForKey(varName).js;
 }
 
-function run() {
-    // Cache Safari application object to reduce overhead
-    const safari = Application("Safari");
+function runCommand(...args) {
+	const task = $.NSTask.alloc.init;
+	const stdout = $.NSPipe.pipe;
 
-    if (!safari.running()) {
-        return JSON.stringify({
-            items: [{
-                title: "Safari is not running",
-                subtitle: "Press enter to launch Safari",
-                valid: false
-            }]
-        });
-    }
+	task.executableURL = $.NSURL.fileURLWithPath("/usr/bin/env");
+	task.arguments = args;
+	task.standardOutput = stdout;
+	task.launchAndReturnError(false);
 
-    try {
-        const tabsMap = new Map();
+	const dataOut =
+		stdout.fileHandleForReading.readDataToEndOfFileAndReturnError(false);
+	const stringOut = $.NSString.alloc.initWithDataEncoding(
+		dataOut,
+		$.NSUTF8StringEncoding
+	).js;
 
-        // Predefined regular expressions
-        const protocolRegex = /(^\w+:|^)\/\//;
-        const nonWordRegex = /[^\w]/g;
-
-        // Single-pass processing: build map only
-        const windows = safari.windows();
-        for (const window of windows) {
-            for (const tab of window.tabs()) {
-                const tabData = getTabData(tab, protocolRegex, nonWordRegex);
-                if (!tabData) continue;
-
-                const { url, data } = tabData;
-
-                if (tabsMap.has(url)) {
-                    // URL already exists: increment count only
-                    tabsMap.get(url).count++;
-                } else {
-                    // New URL: add to map
-                    tabsMap.set(url, data);
-                }
-            }
-        }
-
-        // Early return for empty results
-        if (tabsMap.size === 0) {
-            return JSON.stringify({
-                items: [{
-                    title: "No tabs found",
-                    subtitle: "No open tabs in Safari",
-                    valid: false
-                }]
-            });
-        }
-
-        // Format items with proper subtitles in a single pass
-        const items = Array.from(tabsMap.values()).map(({ count, item }) => {
-            if (count > 1) {
-                item.subtitle = `${item.subtitle} (${count} tabs)`;
-            }
-            return item;
-        });
-
-        return JSON.stringify({ items });
-
-    } catch (e) {
-        return JSON.stringify({
-            items: [{
-                title: "Error",
-                subtitle: "Failed to get Safari tabs: " + e.message,
-                valid: false
-            }]
-        });
-    }
+	return stringOut;
 }
+
+const browserRaw = runCommand(
+	$(
+		"~/Library/Application Support/Alfred/Automation/Tasks/com.alfredapp.automation.core/safari/.common/tabs"
+	).stringByExpandingTildeInPath.js,
+	"Safari",
+	"1",
+	"0",
+	"json"
+);
+
+const browserParsed = JSON.parse(
+	JSON.parse(browserRaw)["alfredworkflow"]["arg"]
+);
+
+const sfItems = browserParsed.map((item) => {
+	return {
+		title: item["title"],
+		subtitle: item["url"],
+		autocomplete: item["title"],
+		match: `${item["title"]} ${item["url"]}`,
+		arg: item["url"],
+	};
+});
+
+JSON.stringify({
+	cache: { seconds: 5, loosereload: true },
+	items: sfItems,
+});
