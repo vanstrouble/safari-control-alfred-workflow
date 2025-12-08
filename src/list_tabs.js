@@ -28,6 +28,8 @@ function getTabData(tab, protocolRegex, nonWordRegex) {
                     subtitle: url,
                     arg: url,
                     match: matchString,
+                    autocomplete: title,
+                    valid: true,
                     icon: { path: "./icon.png" },
                     quicklookurl: url
                 }
@@ -54,13 +56,12 @@ function run() {
 
     try {
         const tabsMap = new Map();
-        const items = []; // Pre-allocate final array
 
         // Predefined regular expressions
         const protocolRegex = /(^\w+:|^)\/\//;
         const nonWordRegex = /[^\w]/g;
 
-        // Single-pass processing: build map and array simultaneously
+        // Single-pass processing: build map only
         const windows = safari.windows();
         for (const window of windows) {
             for (const tab of window.tabs()) {
@@ -70,24 +71,17 @@ function run() {
                 const { url, data } = tabData;
 
                 if (tabsMap.has(url)) {
-                    // URL already exists: increment count and update existing item
-                    const existingData = tabsMap.get(url);
-                    existingData.count++;
-
-                    // Update the item subtitle directly in the items array
-                    const existingItem = existingData.item;
-                    existingItem.subtitle = existingItem.subtitle.replace(/ \(\d+ tabs\)$/, '') + ` (${existingData.count} tabs)`;
-
+                    // URL already exists: increment count only
+                    tabsMap.get(url).count++;
                 } else {
-                    // New URL: add to map and items array
+                    // New URL: add to map
                     tabsMap.set(url, data);
-                    items.push(data.item);
                 }
             }
         }
 
         // Early return for empty results
-        if (items.length === 0) {
+        if (tabsMap.size === 0) {
             return JSON.stringify({
                 items: [{
                     title: "No tabs found",
@@ -96,6 +90,14 @@ function run() {
                 }]
             });
         }
+
+        // Format items with proper subtitles in a single pass
+        const items = Array.from(tabsMap.values()).map(({ count, item }) => {
+            if (count > 1) {
+                item.subtitle = `${item.subtitle} (${count} tabs)`;
+            }
+            return item;
+        });
 
         return JSON.stringify({ items });
 
