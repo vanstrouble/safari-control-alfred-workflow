@@ -21,31 +21,60 @@ function runCommand(...args) {
 	return stringOut;
 }
 
-const browserRaw = runCommand(
-	$(
-		"~/Library/Application Support/Alfred/Automation/Tasks/com.alfredapp.automation.core/safari/.common/tabs"
-	).stringByExpandingTildeInPath.js,
-	"Safari",
-	"1",
-	"0",
-	"json"
-);
+try {
+	const browserRaw = runCommand(
+		$(
+			"~/Library/Application Support/Alfred/Automation/Tasks/com.alfredapp.automation.core/safari/.common/tabs"
+		).stringByExpandingTildeInPath.js,
+		"Safari",
+		"1",
+		"0",
+		"json"
+	);
 
-const browserParsed = JSON.parse(
-	JSON.parse(browserRaw)["alfredworkflow"]["arg"]
-);
+	const browserParsed = JSON.parse(
+		JSON.parse(browserRaw)["alfredworkflow"]["arg"]
+	);
 
-const sfItems = browserParsed.map((item) => {
-	return {
-		title: item["title"],
-		subtitle: item["url"],
-		autocomplete: item["title"],
-		match: `${item["title"]} ${item["url"]}`,
-		arg: item["url"],
-	};
-});
+	if (!browserParsed || browserParsed.length === 0) {
+		JSON.stringify({
+			items: [
+				{
+					title: "No tabs found",
+					subtitle: "No open tabs in Safari",
+					valid: false,
+				},
+			],
+		});
+	}
 
-JSON.stringify({
-	cache: { seconds: 5, loosereload: true },
-	items: sfItems,
-});
+	const sfItems = browserParsed.map((item) => {
+		const title = item["title"] || "Untitled";
+		const url = item["url"] || "";
+
+		return {
+			title: title,
+			subtitle: url,
+			autocomplete: title,
+			match: `${title} ${url}`,
+			arg: url,
+			valid: !!url,
+			quicklookurl: url || undefined,
+		};
+	});
+
+	JSON.stringify({
+		cache: { seconds: 5, loosereload: true },
+		items: sfItems,
+	});
+} catch (e) {
+	JSON.stringify({
+		items: [
+			{
+				title: "Error getting Safari tabs",
+				subtitle: e.message || "Unknown error",
+				valid: false,
+			},
+		],
+	});
+}
