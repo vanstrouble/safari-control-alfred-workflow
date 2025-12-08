@@ -1,28 +1,55 @@
 #!/usr/bin/env osascript -l JavaScript
 
+/**
+ * Focuses a Safari tab by URL
+ * @param {string} targetUrl - URL of the tab to focus
+ * @param {Object} safari - Safari application object
+ * @returns {string|null} Success message or null
+ */
+function focusTab(targetUrl, safari) {
+	const windows = safari.windows();
+	const windowsCount = windows.length;
+
+	for (let i = 0; i < windowsCount; i++) {
+		try {
+			const window = windows[i];
+			const matchingTabs = window.tabs.whose({ url: targetUrl });
+
+			if (matchingTabs.length > 0) {
+				safari.activate();
+				window.index = 1;
+				window.currentTab = matchingTabs[0];
+				return "Tab focused successfully";
+			}
+		} catch (e) {
+			continue;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Main entry point
+ * @param {string[]} argv - Command line arguments
+ * @returns {string} Result message
+ */
 function run(argv) {
-    const targetUrl = argv[0];
+	if (!argv || argv.length === 0 || !argv[0]) {
+		return "Error: No URL provided";
+	}
 
-    try {
-        const safari = Application("Safari");
+	const targetUrl = argv[0];
 
-        // Search and activate in one step
-        for (const window of safari.windows()) {
-            try {
-                const matchingTabs = window.tabs.whose({url: targetUrl});
-                if (matchingTabs.length > 0) {
-                    // Found it! Activate immediately
-                    safari.activate();
-                    // delay(0.2);
-                    window.index = 1;
-                    window.currentTab = matchingTabs[0];
-                    return "Tab focused successfully";
-                }
-            } catch (e) {
-                console.log("Error: " + e.message);
-            }
-        }
-    } catch (e) {
-        return `Error: ${e.message}`;
-    }
+	try {
+		const safari = Application("Safari");
+
+		const result = focusTab(targetUrl, safari);
+
+		if (result) {
+			return result;
+		}
+	} catch (e) {
+		return `Error: ${e.message}`;
+	}
 }
