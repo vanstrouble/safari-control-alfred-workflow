@@ -16,12 +16,12 @@ function focusTab(targetUrl, safari) {
 			const matchingTabs = window.tabs.whose({ url: targetUrl });
 
 			if (matchingTabs.length > 0) {
-				safari.activate();
-
-				window.visible = true;
 				window.index = 1;
+				window.visible = true;
 
 				window.currentTab = matchingTabs[0];
+
+				safari.activate();
 
 				return "Tab focused successfully";
 			}
