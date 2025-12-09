@@ -8,17 +8,21 @@
  */
 function focusTab(targetUrl, safari) {
 	const windows = safari.windows();
-	const windowsCount = windows.length;
 
-	for (let i = 0; i < windowsCount; i++) {
+	for (let i = 0; i < windows.length; i++) {
+		const window = windows[i];
+
 		try {
-			const window = windows[i];
 			const matchingTabs = window.tabs.whose({ url: targetUrl });
 
 			if (matchingTabs.length > 0) {
 				safari.activate();
+
+				window.visible = true;
 				window.index = 1;
+
 				window.currentTab = matchingTabs[0];
+
 				return "Tab focused successfully";
 			}
 		} catch (e) {
@@ -26,7 +30,7 @@ function focusTab(targetUrl, safari) {
 		}
 	}
 
-	return null;
+	return "Error: Tab not found";
 }
 
 /**
@@ -35,7 +39,7 @@ function focusTab(targetUrl, safari) {
  * @returns {string} Result message
  */
 function run(argv) {
-	if (!argv || argv.length === 0 || !argv[0]) {
+	if (!argv?.[0]) {
 		return "Error: No URL provided";
 	}
 
@@ -43,12 +47,7 @@ function run(argv) {
 
 	try {
 		const safari = Application("Safari");
-
-		const result = focusTab(targetUrl, safari);
-
-		if (result) {
-			return result;
-		}
+		return focusTab(targetUrl, safari);
 	} catch (e) {
 		return `Error: ${e.message}`;
 	}
