@@ -1,25 +1,30 @@
-function envVar(varName) {
-	return $.NSProcessInfo.processInfo.environment.objectForKey(varName).js;
-}
-
+/**
+ * Executes a command and returns its standard output.
+ * @param {...string} args The command and its arguments to execute.
+ * @returns {string} The standard output (stdout) of the command as a string.
+ */
 function runCommand(...args) {
-	const task = $.NSTask.alloc.init;
-	const stdout = $.NSPipe.pipe;
+    const task = $.NSTask.alloc.init;
+    const stdout = $.NSPipe.pipe;
 
-	task.executableURL = $.NSURL.fileURLWithPath("/usr/bin/env");
-	task.arguments = args;
-	task.standardOutput = stdout;
-	task.launchAndReturnError(false);
+    task.executableURL = $.NSURL.fileURLWithPath("/usr/bin/env");
+    task.arguments = args;
+    task.standardOutput = stdout;
+    task.launchAndReturnError(false);
 
-	const dataOut =
-		stdout.fileHandleForReading.readDataToEndOfFileAndReturnError(false);
-	const stringOut = $.NSString.alloc.initWithDataEncoding(
-		dataOut,
-		$.NSUTF8StringEncoding
-	).js;
+    const dataOut =
+        stdout.fileHandleForReading.readDataToEndOfFileAndReturnError(false);
+    const stringOut = $.NSString.alloc.initWithDataEncoding(
+        dataOut,
+        $.NSUTF8StringEncoding
+    ).js;
 
-	return stringOut;
+    return stringOut;
 }
+
+// --- Script Main ---
+
+let output;
 
 try {
 	const browserRaw = runCommand(
@@ -32,12 +37,14 @@ try {
 		"json"
 	);
 
+	// The command returns a JSON string where the actual tab data is itself a stringified JSON array.
+	// Therefore, we need to parse it twice.
 	const browserParsed = JSON.parse(
 		JSON.parse(browserRaw)["alfredworkflow"]["arg"]
 	);
 
 	if (!browserParsed || browserParsed.length === 0) {
-		JSON.stringify({
+		output = {
 			items: [
 				{
 					title: "No tabs found",
@@ -45,35 +52,53 @@ try {
 					valid: false,
 				},
 			],
-		});
-	}
-
-	const sfItems = browserParsed.map((item) => {
-		const title = item["title"] || "Untitled";
-		const url = item["url"] || "";
-
-		return {
-			title: title,
-			subtitle: url,
-			autocomplete: title,
-			match: `${title} ${url}`,
-			arg: url,
-			valid: !!url,
-			quicklookurl: url || undefined,
 		};
-	});
+	} else {
+		const uniqueTabs = new Map();
 
-	JSON.stringify({
-		cache: { seconds: 5, loosereload: true },
-		items: sfItems,
-	});
+		for (const item of browserParsed) {
+			const url = item.url || "";
+			if (!url) continue;
+
+			if (uniqueTabs.has(url)) {
+				uniqueTabs.get(url).count++;
+			} else {
+				const title = item.title || "Untitled";
+				uniqueTabs.set(url, {
+					item: {
+						title: title,
+						subtitle: url,
+						autocomplete: title,
+						match: `${title} ${url}`,
+						arg: url,
+						valid: true,
+						quicklookurl: url,
+					},
+					count: 1,
+				});
+			}
+		}
+
+		const sfItems = Array.from(uniqueTabs.values()).map((entry) => {
+			if (entry.count > 1) {
+				entry.item.title += ` · (${entry.count} tabs)`;
+			}
+			return entry.item;
+		});
+
+		output = {
+			cache: { seconds: 5, loosereload: true },
+			items: sfItems,
+		};
+	}
 } catch (e) {
 	let items;
 	if (e.message.includes("Unexpected EOF")) {
 		items = [
 			{
 				title: "No Safari tabs found",
-				subtitle: "Press ↩ to open a new Safari window or Esc to cancel",
+				subtitle:
+					"Press ↩ to open a new Safari window or Esc to cancel",
 				valid: true,
 				arg: "1",
 			},
@@ -87,5 +112,7 @@ try {
 			},
 		];
 	}
-	JSON.stringify({ items });
+	output = { items };
 }
+
+JSON.stringify(output);
