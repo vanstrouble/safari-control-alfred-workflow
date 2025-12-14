@@ -3,15 +3,13 @@
 // JXA script to open new Safari windows with profile and URL support.
 //
 // Usage:
-// ./new_window.js [x<count>] [p<profile>] [url]
+// ./new_window.js [x<count>] || [p<profile>] || [url]
 //
 // Examples:
 // ./new_window.js                  -> Opens 1 new window.
+// ./new_window.js example.com      -> Opens 1 new window with URL.
 // ./new_window.js x3               -> Opens 3 new windows.
 // ./new_window.js p2               -> Opens 1 new window in profile 2.
-// ./new_window.js x4 p2            -> Opens 4 new windows in profile 2.
-// ./new_window.js example.com      -> Opens 1 new window with URL.
-// ./new_window.js x2 p3 example.com -> Opens 2 new windows in profile 3 with URL.
 
 function run(argv) {
     'use strict';
@@ -28,32 +26,30 @@ function run(argv) {
 
     const args = [...argv]; // Create a mutable copy
 
-    // Parse window count (e.g., "x3")
-    if (args.length > 0 && args[0].match(/^x[0-9]+$/)) {
-        const count = parseInt(args[0].substring(1), 10);
-        if (count > 0 && count <= 10) {
-            windowCount = count;
-        } else if (count > 10) {
-            windowCount = 10; // Cap at 10
-        }
-        args.shift();
-    }
-
-    // Parse profile (e.g., "p2")
-    if (args.length > 0 && args[0].match(/^p[1-5]$/)) {
-        profile = args[0].substring(1);
-        args.shift();
-    }
-
-    // The rest is the URL
+    // The script only handles one argument type at a time (count, profile, or URL).
     if (args.length > 0) {
-        const rawUrl = args.join(' ');
-        // Basic validation and formatting
-        if (rawUrl && !rawUrl.includes(' ')) {
-            if (rawUrl.includes('.') && !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
-                url = 'http://' + rawUrl;
-            } else if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
-                url = rawUrl;
+        const firstArg = args[0];
+        if (firstArg.match(/^x[0-9]+$/)) {
+            // Parse window count (e.g., "x3")
+            const count = parseInt(firstArg.substring(1), 10);
+            if (count > 0 && count <= 10) {
+                windowCount = count;
+            } else if (count > 10) {
+                windowCount = 10; // Cap at 10
+            }
+        } else if (firstArg.match(/^p[1-5]$/)) {
+            // Parse profile (e.g., "p2")
+            profile = firstArg.substring(1);
+        } else {
+            // The rest is the URL
+            const rawUrl = args.join(' ');
+            // Basic validation and formatting
+            if (rawUrl && !rawUrl.includes(' ')) {
+                if (rawUrl.includes('.') && !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+                    url = 'http://' + rawUrl;
+                } else if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+                    url = rawUrl;
+                }
             }
         }
     }
