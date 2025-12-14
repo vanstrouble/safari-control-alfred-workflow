@@ -66,21 +66,11 @@ function run(argv) {
         Safari.activate();
     }
 
-    const openInProfile = (p, u) => {
+    const openInProfile = (p) => {
         // Use keyboard shortcut to switch to the selected profile
         // Option + Shift + Command + n
         SystemEvents.keystroke(p, { using: ["option down", "shift down", "command down"] });
         delay(0.5); // Wait for the new window to appear
-
-        // If a URL is provided, set it
-        if (u) {
-            try {
-                // The new window should be the frontmost one
-                Safari.windows[0].currentTab.url = u;
-            } catch (e) {
-                // Fallback if setting URL fails
-            }
-        }
     };
 
     const openStandardWindow = (u) => {
@@ -116,7 +106,7 @@ function run(argv) {
     // Create the required number of windows.
     for (let i = 0; i < windowsToCreate; i++) {
         if (profile) {
-            openInProfile(profile, url);
+            openInProfile(profile);
         } else {
             openStandardWindow(url);
         }
