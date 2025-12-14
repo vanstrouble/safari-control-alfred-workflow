@@ -68,26 +68,24 @@ try {
 		items: sfItems,
 	});
 } catch (e) {
-    if (e.message.includes("Unexpected EOF")) {
-        JSON.stringify({
-            items: [
-                {
-                    title: "No Safari tabs found",
-                    subtitle: "Press Enter to open a new Safari window",
-                    valid: true,
-                    arg: "1",
-                },
-            ],
-        });
-    } else {
-        JSON.stringify({
-            items: [
-                {
-                    title: "Error getting Safari tabs",
-                    subtitle: e.message,
-                    valid: false,
-                },
-            ],
-        });
-    }
+	let items;
+	if (e.message.includes("Unexpected EOF")) {
+		items = [
+			{
+				title: "No Safari tabs found",
+				subtitle: "Press ↩ to open a new Safari window or Esc to cancel",
+				valid: true,
+				arg: "1",
+			},
+		];
+	} else {
+		items = [
+			{
+				title: "Error getting Safari tabs",
+				subtitle: e.message,
+				valid: false,
+			},
+		];
+	}
+	JSON.stringify({ items });
 }
