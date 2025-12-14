@@ -96,48 +96,37 @@ function run(argv) {
 
     // --- Main Logic ---
 
+    let windowsToCreate = windowCount;
+
     // If Safari wasn't running, it was just launched, creating one window.
-    // We need to account for that.
     if (!safariWasRunning) {
         if (profile) {
             // The auto-opened window is in the default profile. Close it.
             try {
                 Safari.windows[0].close();
                 delay(0.2);
-            } catch (e) {
-                // Ignore if it fails (e.g., window already closed)
-            }
-            // Now create the correct number of windows in the correct profile.
-            for (let i = 0; i < windowCount; i++) {
-                openInProfile(profile, url);
-                if (windowCount > 1 && i < windowCount - 1) delay(0.2);
-            }
+            } catch (e) { /* Ignore */ }
         } else {
             // One window is already open. Set its URL if provided.
             if (url) {
                 try {
                     Safari.windows[0].currentTab.url = url;
-                } catch (e) {
-                    // Fallback
-                }
+                } catch (e) { /* Ignore */ }
             }
-            // Create the rest of the windows.
-            for (let i = 1; i < windowCount; i++) {
-                openStandardWindow(url);
-                if (windowCount > 1) delay(0.2);
-            }
+            windowsToCreate--; // Account for the already-opened window.
         }
-    } else {
-        // Safari was already running, so create the requested number of windows.
-        for (let i = 0; i < windowCount; i++) {
-            if (profile) {
-                openInProfile(profile, url);
-            } else {
-                openStandardWindow(url);
-            }
-            if (windowCount > 1 && i < windowCount - 1) {
-                delay(0.2); // Small delay between multiple windows
-            }
+    }
+
+    // Create the required number of windows.
+    for (let i = 0; i < windowsToCreate; i++) {
+        if (profile) {
+            openInProfile(profile, url);
+        } else {
+            openStandardWindow(url);
+        }
+        // Small delay between multiple windows
+        if (windowsToCreate > 1 && i < windowsToCreate - 1) {
+            delay(0.2);
         }
     }
 }
