@@ -6,6 +6,29 @@
  *
  * @param {string[]} argv - An array of arguments, where argv[0] is the URL.
  */
+
+/**
+ * Finds and closes all tabs in Safari that match the given URL.
+ * @param {object} safari - The Safari Application object.
+ * @param {string} urlToClose - The URL of the tabs to close.
+ * @returns {number} The number of tabs that were closed.
+ */
+function closeTabsForURL(safari, urlToClose) {
+	// Use 'whose' to find all tabs with the matching URL across all windows.
+	const tabsToClose = safari.windows.tabs.whose({ url: urlToClose })();
+
+	const closedTabsCount = tabsToClose.length;
+
+	if (closedTabsCount > 0) {
+		// Iterate backwards to safely close tabs.
+		for (let i = closedTabsCount - 1; i >= 0; i--) {
+			tabsToClose[i].close();
+		}
+	}
+
+	return closedTabsCount;
+}
+
 function run(argv) {
 	'use strict';
 
@@ -22,33 +45,10 @@ function run(argv) {
 	const safari = Application("Safari");
 	safari.includeStandardAdditions = true;
 
-	let closedTabsCount = 0;
-	const tabsToClose = [];
-
-	// We need to iterate through all windows and their tabs.
-	const safariWindows = safari.windows();
-	for (let i = 0; i < safariWindows.length; i++) {
-		const window = safariWindows[i];
-		const windowTabs = window.tabs();
-		for (let j = 0; j < windowTabs.length; j++) {
-			const tab = windowTabs[j];
-			// Compare the tab's URL with the one we want to close.
-			if (tab.url() === urlToClose) {
-				tabsToClose.push(tab);
-			}
-		}
-	}
-
-	// Now, close the collected tabs.
-	// We iterate backwards to avoid issues with modifying the collection
-	// while iterating over it.
-	if (tabsToClose.length > 0) {
-		for (let i = tabsToClose.length - 1; i >= 0; i--) {
-			tabsToClose[i].close();
-			closedTabsCount++;
-		}
-	}
+	const closedTabsCount = closeTabsForURL(safari, urlToClose);
 
 	// This message will be posted by Alfred after the script runs.
-	return `Closed ${closedTabsCount} tab(s) for URL: ${urlToClose}`;
+	if (closedTabsCount > 0) {
+		return `Closed ${closedTabsCount} tab(s) for URL: ${urlToClose}`;
+	}
 }
