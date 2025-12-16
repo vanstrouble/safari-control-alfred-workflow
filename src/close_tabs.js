@@ -1,11 +1,4 @@
-/*
- * Closes all Safari tabs that match the provided URL.
- *
- * This script is designed to be run from an Alfred workflow.
- * It expects a URL as its first and only argument.
- *
- * @param {string[]} argv - An array of arguments, where argv[0] is the URL.
- */
+#!/usr/bin/env osascript -l JavaScript
 
 /**
  * Finds and closes all tabs in Safari that match the given URL.
@@ -14,15 +7,22 @@
  * @returns {number} The number of tabs that were closed.
  */
 function closeTabsForURL(safari, urlToClose) {
-	// Use 'whose' to find all tabs with the matching URL across all windows.
-	const tabsToClose = safari.windows.tabs.whose({ url: urlToClose })();
+	let closedTabsCount = 0;
 
-	const closedTabsCount = tabsToClose.length;
+	// Get all windows as an array.
+	const windows = safari.windows();
 
-	if (closedTabsCount > 0) {
-		// Iterate backwards to safely close tabs.
-		for (let i = closedTabsCount - 1; i >= 0; i--) {
-			tabsToClose[i].close();
+	// Iterate through each window.
+	for (let i = 0; i < windows.length; i++) {
+		// Use 'whose' to find matching tabs in this specific window.
+		const tabsToClose = windows[i].tabs.whose({ url: urlToClose })();
+
+		if (tabsToClose.length > 0) {
+			// Close all matching tabs in this window.
+			for (let j = tabsToClose.length - 1; j >= 0; j--) {
+				tabsToClose[j].close();
+				closedTabsCount++;
+			}
 		}
 	}
 
