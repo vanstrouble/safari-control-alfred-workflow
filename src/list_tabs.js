@@ -4,22 +4,22 @@
  * @returns {string} The standard output (stdout) of the command as a string.
  */
 function runCommand(...args) {
-    const task = $.NSTask.alloc.init;
-    const stdout = $.NSPipe.pipe;
+	const task = $.NSTask.alloc.init;
+	const stdout = $.NSPipe.pipe;
 
-    task.executableURL = $.NSURL.fileURLWithPath("/usr/bin/env");
-    task.arguments = args;
-    task.standardOutput = stdout;
-    task.launchAndReturnError(false);
+	task.executableURL = $.NSURL.fileURLWithPath("/usr/bin/env");
+	task.arguments = args;
+	task.standardOutput = stdout;
+	task.launchAndReturnError(false);
 
-    const dataOut =
-        stdout.fileHandleForReading.readDataToEndOfFileAndReturnError(false);
-    const stringOut = $.NSString.alloc.initWithDataEncoding(
-        dataOut,
-        $.NSUTF8StringEncoding
-    ).js;
+	const dataOut =
+		stdout.fileHandleForReading.readDataToEndOfFileAndReturnError(false);
+	const stringOut = $.NSString.alloc.initWithDataEncoding(
+		dataOut,
+		$.NSUTF8StringEncoding
+	).js;
 
-    return stringOut;
+	return stringOut;
 }
 
 // --- Script Main ---
@@ -73,6 +73,14 @@ try {
 						arg: url,
 						valid: true,
 						quicklookurl: url,
+						mods: {
+							cmd: {
+								subtitle: "⌘ Copy URL to clipboard",
+							},
+							ctrl: {
+								subtitle: "⌃ Close all tabs with this URL",
+							},
+						},
 					},
 					count: 1,
 				});
@@ -101,6 +109,16 @@ try {
 					"Press ↩ to open a new Safari window or Esc to cancel",
 				valid: true,
 				arg: "1",
+				mods: {
+					cmd: {
+						valid: false,
+						subtitle: "These actions require a selected tab",
+					},
+					ctrl: {
+						valid: false,
+						subtitle: "These actions require a selected tab",
+					},
+				},
 			},
 		];
 	} else {
