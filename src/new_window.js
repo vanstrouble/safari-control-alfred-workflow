@@ -11,108 +11,123 @@
 // ./new_window.js x3               -> Opens 3 new windows.
 // ./new_window.js p2               -> Opens 1 new window in profile 2.
 
+/**
+ * Parses script arguments to determine window count, profile, or URL.
+ * @param {string[]} argv - The script arguments.
+ * @returns {{windowCount: number, profile: string|null, url: string|null}}
+ */
+function parseArgs(argv) {
+	const config = {
+		windowCount: 1,
+		profile: null,
+		url: null,
+	};
+
+	if (!argv || argv.length === 0) {
+		return config;
+	}
+
+	const firstArg = argv[0];
+
+	if (/^x[0-9]+$/.test(firstArg)) {
+		// Parse window count (e.g., "x3"), capped at 10.
+		const count = parseInt(firstArg.substring(1), 10);
+		config.windowCount = Math.max(1, Math.min(count, 10));
+	} else if (/^p[1-5]$/.test(firstArg)) {
+		// Parse profile (e.g., "p2")
+		config.profile = firstArg.substring(1);
+	} else {
+		// The rest is the URL
+		const rawUrl = argv.join(" ");
+		// Basic validation and formatting
+		if (!rawUrl.includes(" ") && rawUrl.includes(".")) {
+			if (!/^(https?:\/\/)/i.test(rawUrl)) {
+				config.url = "http://" + rawUrl;
+			} else {
+				config.url = rawUrl;
+			}
+		}
+	}
+
+	return config;
+}
+
 function run(argv) {
-    'use strict';
+	"use strict";
 
-    // Initialize applications
-    const Safari = Application("Safari");
-    const SystemEvents = Application("System Events");
-    Safari.includeStandardAdditions = true;
+	// Initialize applications
+	const Safari = Application("Safari");
+	const SystemEvents = Application("System Events");
+	Safari.includeStandardAdditions = true;
 
-    // --- Argument Parsing ---
-    let windowCount = 1;
-    let profile = null;
-    let url = null;
+	// --- Argument Parsing ---
+	const { windowCount, profile, url } = parseArgs(argv);
 
-    const args = [...argv]; // Create a mutable copy
+	// --- Safari Automation ---
 
-    // The script only handles one argument type at a time (count, profile, or URL).
-    if (args.length > 0) {
-        const firstArg = args[0];
-        if (firstArg.match(/^x[0-9]+$/)) {
-            // Parse window count (e.g., "x3")
-            const count = parseInt(firstArg.substring(1), 10);
-            if (count > 0 && count <= 10) {
-                windowCount = count;
-            } else if (count > 10) {
-                windowCount = 10; // Cap at 10
-            }
-        } else if (firstArg.match(/^p[1-5]$/)) {
-            // Parse profile (e.g., "p2")
-            profile = firstArg.substring(1);
-        } else {
-            // The rest is the URL
-            const rawUrl = args.join(' ');
-            // Basic validation and formatting
-            if (rawUrl && !rawUrl.includes(' ')) {
-                if (rawUrl.includes('.') && !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
-                    url = 'http://' + rawUrl;
-                } else if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
-                    url = rawUrl;
-                }
-            }
-        }
-    }
+	const safariWasRunning = Safari.running();
 
-    // --- Safari Automation ---
+	// Ensure Safari is running and activate it
+	if (!safariWasRunning) {
+		Safari.activate(); // This will open one window
+		delay(0.5);
+	} else {
+		Safari.activate();
+	}
 
-    const safariWasRunning = Safari.running();
+	const openInProfile = (p) => {
+		// Use keyboard shortcut to switch to the selected profile
+		// Option + Shift + Command + n
+		SystemEvents.keystroke(p, {
+			using: ["option down", "shift down", "command down"],
+		});
+		delay(0.5); // Wait for the new window to appear
+	};
 
-    // Ensure Safari is running and activate it
-    if (!safariWasRunning) {
-        Safari.activate(); // This will open one window
-        delay(0.5);
-    } else {
-        Safari.activate();
-    }
+	const openStandardWindow = (u) => {
+		const doc = Safari.Document().make();
+		if (u) {
+			doc.url = u;
+		}
+	};
 
-    const openInProfile = (p) => {
-        // Use keyboard shortcut to switch to the selected profile
-        // Option + Shift + Command + n
-        SystemEvents.keystroke(p, { using: ["option down", "shift down", "command down"] });
-        delay(0.5); // Wait for the new window to appear
-    };
+	// --- Main Logic ---
 
-    const openStandardWindow = (u) => {
-        const doc = Safari.Document().make();
-        if (u) {
-            doc.url = u;
-        }
-    };
+	let windowsToCreate = windowCount;
 
-    // --- Main Logic ---
+	// If Safari wasn't running, it was just launched, creating one window.
+	if (!safariWasRunning) {
+		if (profile) {
+			// The auto-opened window is in the default profile. Close it.
+			try {
+				Safari.windows[0].close();
+				delay(0.2);
+			} catch (e) {
+				/* Ignore */
+			}
+		} else {
+			// One window is already open. Set its URL if provided.
+			if (url) {
+				try {
+					Safari.windows[0].currentTab.url = url;
+				} catch (e) {
+					/* Ignore */
+				}
+			}
+			windowsToCreate--; // Account for the already-opened window.
+		}
+	}
 
-    let windowsToCreate = windowCount;
-
-    // If Safari wasn't running, it was just launched, creating one window.
-    if (!safariWasRunning) {
-        if (profile) {
-            // The auto-opened window is in the default profile. Close it.
-            try {
-                Safari.windows[0].close();
-                delay(0.2);
-            } catch (e) { /* Ignore */ }
-        } else {
-            // One window is already open. Set its URL if provided.
-            if (url) {
-                try {
-                    Safari.windows[0].currentTab.url = url;
-                } catch (e) { /* Ignore */ }
-            }
-            windowsToCreate--; // Account for the already-opened window.
-        }
-    }
-
-    // Create the required number of windows.
-    for (let i = 0; i < windowsToCreate; i++) {
-        if (profile) {
-            openInProfile(profile);
-        } else {
-            openStandardWindow(url);
-        }
-        // Small delay between multiple windows
-        if (windowsToCreate > 1 && i < windowsToCreate - 1) {
-            delay(0.2);
-        }
-    }
+	// Create the required number of windows.
+	for (let i = 0; i < windowsToCreate; i++) {
+		if (profile) {
+			openInProfile(profile);
+		} else {
+			openStandardWindow(url);
+		}
+		// Small delay between multiple windows
+		if (windowsToCreate > 1 && i < windowsToCreate - 1) {
+			delay(0.2);
+		}
+	}
 }
