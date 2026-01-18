@@ -77,6 +77,9 @@ try {
 							cmd: {
 								subtitle: "⌘ Copy URL to clipboard",
 							},
+							alt: {
+								subtitle: "⌥ Edit URL",
+							},
 							ctrl: {
 								subtitle: "⌃ Close all tabs with this URL",
 							},
