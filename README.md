@@ -1,11 +1,11 @@
 # <img src="img/safari-icon.png" alt="Alfred Safari Window Workflow" align="center" width="45"/> Safari Control | Alfred Workflow
 
-Open new Safari windows anywhere, sneak into private browsing, switch profiles like you’re hiding something, and zip through tabs like your boss is walking in.
+Open Safari windows from anywhere, jump into private browsing, switch between profiles, browse your history, and move through tabs instantly, right from Alfred.
 
 ## Download
 
 - Available on the Alfred Gallery. [Get it here](https://alfred.app/workflows/vanstrouble/safari-control/).
-- You can also download it directly from GitHub [here](https://github.com/vanstrouble/new-safari-window-alfred-workflow/releases/latest).
+- You can also download it directly [from GitHub here](https://github.com/vanstrouble/new-safari-window-alfred-workflow/releases/latest).
 
 ## Usage
 
@@ -16,7 +16,7 @@ Open new Safari windows anywhere, sneak into private browsing, switch profiles l
 Opens a new Safari window in the current space.
 
 - **Keyword:** `sw`
-  - <kbd>⌘</kbd><kbd>↩</kbd> Open a new private window
+  - `⌘` `↩` Open a new private window
 
 #### Examples:
 
@@ -26,6 +26,46 @@ Opens a new Safari window in the current space.
 | `sw x3`         | Opens 3 new Safari windows in the current space.                           |
 | `sw URL`        | Opens a new Safari window with the specified URL.                          |
 | `sw + Command (⌘)`  | Opens a new tab in the current Safari window instead of creating a window. |
+
+### Copy current tab URL (swu)
+
+<img src="img/swu.png" alt="Alfred Safari copy URL" width="570"/>
+
+Copies the URL of the currently focused Safari tab directly to your clipboard, allowing for quick sharing or referencing.
+
+- **Keyword:** `swu`
+
+### Open current tab in private mode (stp)
+
+<img src="img/stp.png" alt="Alfred Safari private tab" width="570"/>
+
+Extracts the current tab (the one you are currently viewing) and opens it in a new private browsing window.
+
+- **Keyword:** `stp`
+  - `⌘` `↩` Close the tab in the normal browsing windows.
+
+### List Safari tabs (swt)
+
+<img src="img/swt.png" alt="Alfred Safari tabs" width="570"/>
+
+Browse all open Safari tabs and search by title or URL to instantly bring the one you need into focus.
+
+- **Keyword:** `swt`
+  - `⌘` `↩` Copy the URL of the tab
+  - `⌃` `↩` Close the tab
+  - `⌥` `↩` Modify the URL
+
+
+### List Safari history (shi)
+
+<img src="img/shi.png" alt="Alfred Safari history" width="570"/>
+
+Browse your recent Safari browsing history and search by title or URL.
+
+- **Keyword:** `shi`
+  - `↩` Open the selected history item in Safari
+  - `⌘` `↩` Copy the URL to the clipboard
+  - `⌥` `↩` Modify the URL
 
 ### Open Safari window profiles (swp)
 
@@ -46,38 +86,11 @@ Use `sw p[number]` to instantly open a new Safari window with the selected profi
 | `sw p2`        | Opens a new Safari window using Profile 2.                                 |
 | `sw p3`        | Opens a new Safari window using Profile 3.                                 |
 
-**Note:** Profiles without assigned names in the workflow configuration won't appear in the list, allowing for a cleaner interface with only the profiles you actually use.
-
-### List Safari tabs (swt)
-
-<img src="img/swt.png" alt="Alfred Safari tabs" width="570"/>
-
-Browse all open Safari tabs and search by title or URL to instantly bring the one you need into focus.
-
-- **Keyword:** `swt`
-  - <kbd>⌘</kbd><kbd>↩</kbd> Copy the URL of the tab
-  - <kbd>⌃</kbd><kbd>↩</kbd> Close the tab
-
-### Copy current tab URL (swu)
-
-<img src="img/swu.png" alt="Alfred Safari copy URL" width="570"/>
-
-Copies the URL of the currently focused Safari tab directly to your clipboard, allowing for quick sharing or referencing.
-
-- **Keyword:** `swu`
-
-### Open current tab in private mode (stp)
-
-<img src="img/stp.png" alt="Alfred Safari private tab" width="570"/>
-
-Extracts the current tab (the one you are currently viewing) and opens it in a new private browsing window.
-
-- **Keyword:** `stp`
-  - <kbd>⌘</kbd><kbd>↩</kbd> Close the tab in the normal browsing windows.
+**Note:** Profiles without assigned names in the workflow configuration will not appear in the list, allowing for a cleaner interface with only the profiles that are actually used.
 
 ## Customization
 
-Customize the workflow to fit your style: change the default keywords, assign hotkeys to trigger actions instantly, and rename the default profiles to match your Safari setup. All settings can be adjusted directly in Alfred during or after installation.
+Keywords, hotkeys, and Safari profile names can be customized. All configuration is handled directly in Alfred.
 
 ## Acknowledgments
 
