@@ -83,6 +83,10 @@ try {
 							ctrl: {
 								subtitle: "⌃ Close all tabs with this URL",
 							},
+							"cmd+shift": {
+								subtitle: "⇧⌘ Copy markdown URL to clipboard",
+								arg: JSON.stringify({ url: url, title: title }),
+							},
 						},
 					},
 					count: 1,
