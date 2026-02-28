@@ -9,8 +9,22 @@
             JSON_OBJECT(
                 'title', IIF(title IS NULL OR title IS '', url, title),
                 'subtitle', url,
+                'autocomplete', IIF(title IS NULL OR title IS '', url, title),
+                'match', title || ' ' || url,
                 'arg', url,
-                'match', title || ' ' || url
+                'quicklookurl', url,
+                'mods', JSON_OBJECT(
+                    'cmd', JSON_OBJECT(
+                        'subtitle', '⌘ Copy URL to clipboard'
+                    ),
+                    'alt', JSON_OBJECT(
+                        'subtitle', '⌥ Edit URL'
+                    ),
+                    'cmd+shift', JSON_OBJECT(
+                        'subtitle', '⇧⌘ Copy markdown URL to clipboard',
+                        'arg', JSON_OBJECT('url', url, 'title', IIF(title IS NULL OR title IS '', url, title))
+                    )
+                )
             )
         )
     ) AS JSON_RESULT
