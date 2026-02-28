@@ -34,6 +34,7 @@ Opens a new Safari window in the current space.
 Copies the URL of the currently focused Safari tab directly to your clipboard, allowing for quick sharing or referencing.
 
 - **Keyword:** `swu`
+  - `⇧` `⌘` Copy the URL using Markdown format.
 
 ### Open current tab in private mode (stp)
 
@@ -52,6 +53,7 @@ Browse all open Safari tabs and search by title or URL to instantly bring the on
 
 - **Keyword:** `swt`
   - `⌘` `↩` Copy the URL of the tab
+  - `⇧` `⌘` Copy the URL using Markdown format.
   - `⌃` `↩` Close the tab
   - `⌥` `↩` Modify the URL
 
@@ -65,6 +67,7 @@ Browse your recent Safari browsing history and search by title or URL.
 - **Keyword:** `shi`
   - `↩` Open the selected history item in Safari
   - `⌘` `↩` Copy the URL to the clipboard
+  - `⇧` `⌘` Copy the URL using Markdown format.
   - `⌥` `↩` Modify the URL
 
 ### Open Safari window profiles (swp)
