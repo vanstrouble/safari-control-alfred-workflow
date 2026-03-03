@@ -27,14 +27,14 @@ Opens a new Safari window in the current space.
 | `sw URL`        | Opens a new Safari window with the specified URL.                          |
 | `sw + Command (⌘)`  | Opens a new tab in the current Safari window instead of creating a window. |
 
-### Copy current tab URL (swu)
+### Copy current tab URL (swc)
 
-<img src="img/swu.png" alt="Alfred Safari copy URL" width="570"/>
+<img src="img/swc.png" alt="Alfred Safari copy URL" width="570"/>
 
 Copies the URL of the currently focused Safari tab directly to your clipboard, allowing for quick sharing or referencing.
 
-- **Keyword:** `swu`
-  - `⇧` `⌘` Copy the URL using Markdown format.
+- **Keyword:** `swc`
+  - `⇧` `⌘` `↩` Copy the URL using Markdown format.
 
 ### Open current tab in private mode (stp)
 
@@ -52,10 +52,11 @@ Extracts the current tab (the one you are currently viewing) and opens it in a n
 Browse all open Safari tabs and search by title or URL to instantly bring the one you need into focus.
 
 - **Keyword:** `swt`
+  - `↩` Switch to the selected tab in Safari
+  - `⇧` `⌘` `↩` Copy the URL using Markdown format.
   - `⌘` `↩` Copy the URL of the tab
-  - `⇧` `⌘` Copy the URL using Markdown format.
-  - `⌃` `↩` Close the tab
   - `⌥` `↩` Modify the URL
+  - `⌃` `↩` Close the tab
 
 
 ### List Safari history (shi)
@@ -66,8 +67,8 @@ Browse your recent Safari browsing history and search by title or URL.
 
 - **Keyword:** `shi`
   - `↩` Open the selected history item in Safari
+  - `⇧` `⌘` `↩` Copy the URL using Markdown format.
   - `⌘` `↩` Copy the URL to the clipboard
-  - `⇧` `⌘` Copy the URL using Markdown format.
   - `⌥` `↩` Modify the URL
 
 ### Open Safari window profiles (swp)
