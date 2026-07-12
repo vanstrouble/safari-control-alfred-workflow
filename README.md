@@ -75,26 +75,20 @@ Browse your recent Safari browsing history and search by title or URL.
 
 <img src="img/swp.png" alt="Alfred Safari profiles" width="570"/>
 
-List and open Safari windows using up to 5 customizable profiles (e.g., work, personal, school).
+Lists the profiles currently available in Safari. Profile names do not need to be added to the workflow configuration.
 
 - **Keyword:** `swp`
+  - `↩` Open the selected profile in a new Safari window
 
-Use `sw p[number]` to instantly open a new Safari window with the selected profile.
+Type to filter the list, then press `↩` to open the selected profile.
 
-#### Examples:
+The list is cached for five minutes so it opens quickly on repeated use.
 
-| Command         | Description                                                                 |
-|-----------------|-----------------------------------------------------------------------------|
-| `swp`           | Lists available profiles (Profile 1, …, Profile 5).                |
-| `sw p1`        | Opens a new Safari window using Profile 1.                                 |
-| `sw p2`        | Opens a new Safari window using Profile 2.                                 |
-| `sw p3`        | Opens a new Safari window using Profile 3.                                 |
-
-**Note:** Profiles without assigned names in the workflow configuration will not appear in the list, allowing for a cleaner interface with only the profiles that are actually used.
+**Note:** Alfred needs Accessibility permission to read and open items from Safari's profile menu.
 
 ## Customization
 
-Keywords, hotkeys, and Safari profile names can be customized. All configuration is handled directly in Alfred.
+Keywords and hotkeys can be customized directly in Alfred. Profile names are read from Safari.
 
 ## Acknowledgments
 
