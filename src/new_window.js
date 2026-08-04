@@ -75,11 +75,20 @@ function run(argv) {
 		return Safari.windows.length > beforeCount;
 	};
 
-	const openStandardWindow = (u) => {
-		const doc = Safari.Document().make();
-		if (u) {
-			doc.url = u;
+	const openDefaultWindow = (u) => {
+		if (!openProfileWindow("0")) {
+			return false;
 		}
+
+		if (u) {
+			try {
+				Safari.windows[Safari.windows.length - 1].currentTab.url = u;
+			} catch (e) {
+				/* Ignore */
+			}
+		}
+
+		return true;
 	};
 
 	// --- Main Logic ---
@@ -116,7 +125,9 @@ function run(argv) {
 				throw new Error(`Could not open Safari profile ${profile}. Check Alfred Accessibility permission and the Safari profile hotkey.`);
 			}
 		} else {
-			openStandardWindow(url);
+			if (!openDefaultWindow(url)) {
+				throw new Error("Could not open a default Safari window. Check Alfred Accessibility permission and the Safari profile hotkey.");
+			}
 		}
 		// Small delay between multiple windows
 		if (windowsToCreate > 1 && i < windowsToCreate - 1) {
