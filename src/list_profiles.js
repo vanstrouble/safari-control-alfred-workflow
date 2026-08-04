@@ -38,17 +38,31 @@ function message(title, subtitle) {
 	return { items: [{ title: title, subtitle: subtitle, valid: false }] };
 }
 
-// The submenu with profiles isn't always menuItems()[0]; scan for the
-// first item that actually has one, locale/order independent.
-function findNewWindowItem(fileMenu) {
-	const items = fileMenu.menuItems();
-	for (let i = 0; i < items.length; i++) {
-		try {
-			if (items[i].menus().length > 0) return { item: items[i], index: i };
-		} catch (e) {
-			/* no submenu, keep looking */
+// Batch-fetch submenus for every item in one Apple Event (same pattern as
+// menuItems.name() below) instead of asking item-by-item. Falls back to
+// per-item probing only if the batch call itself isn't supported.
+function findNewWindowItem(items, itemsSpecifier) {
+	let allMenus = null;
+	try {
+		allMenus = itemsSpecifier.menus();
+	} catch (e) {
+		allMenus = null;
+	}
+
+	if (allMenus) {
+		for (let i = 0; i < allMenus.length; i++) {
+			if (allMenus[i] && allMenus[i].length) return { item: items[i], index: i };
+		}
+	} else {
+		for (let i = 0; i < items.length; i++) {
+			try {
+				if (items[i].menus().length > 0) return { item: items[i], index: i };
+			} catch (e) {
+				/* no submenu, keep looking */
+			}
 		}
 	}
+
 	return { item: items[0], index: 0 };
 }
 
@@ -71,30 +85,35 @@ try {
 
 	const process = step("processes.byName", () => SystemEvents.processes.byName("Safari"));
 	const menuBarItemsRef = process.menuBars[0].menuBarItems;
-	step("menuBarItems.length check", () => {
-		if (!menuBarItemsRef().length) throw new Error("menuBarItems is empty");
-	});
+	const menuBarItemsArray = step("menuBars[0].menuBarItems", () => menuBarItemsRef());
+	if (!menuBarItemsArray.length) throw new Error("menuBarItems is empty");
 
 	// byName("File") returns a specifier lazily: it won't throw until
 	// resolved, so force resolution here to detect non-English locales.
+	// Capture the name in the same call instead of asking again later.
 	let fileMenuItem = null;
+	let fileMenuItemName = null;
 	try {
 		const candidate = menuBarItemsRef.byName("File");
-		candidate.name();
+		fileMenuItemName = candidate.name();
 		fileMenuItem = candidate;
 	} catch (e) {
 		fileMenuItem = null;
 	}
-	const resolvedFileMenuItem = fileMenuItem || step("menuBarItems()[2] fallback", () => menuBarItemsRef()[2]);
-	const fileMenuItemName = step("fileMenuItem.name()", () => resolvedFileMenuItem.name());
+
+	const resolvedFileMenuItem = fileMenuItem || menuBarItemsArray[2];
+	if (!fileMenuItem) {
+		fileMenuItemName = step("fileMenuItem.name()", () => resolvedFileMenuItem.name());
+	}
 	const fileMenu = step("fileMenuItem.menus()[0]", () => resolvedFileMenuItem.menus()[0]);
 
-	const fileMenuItems = step("fileMenu.menuItems()", () => fileMenu.menuItems());
-	step("fileMenuItems.length check", () => {
-		if (!fileMenuItems.length) throw new Error(`fileMenu (name="${fileMenuItemName}") has 0 menuItems`);
-	});
+	const fileMenuItemsRef = fileMenu.menuItems;
+	const fileMenuItems = step("fileMenu.menuItems()", () => fileMenuItemsRef());
+	if (!fileMenuItems.length) throw new Error(`fileMenu (name="${fileMenuItemName}") has 0 menuItems`);
 
-	const { item: newWindowItem, index } = step("findNewWindowItem", () => findNewWindowItem(fileMenu));
+	const { item: newWindowItem, index } = step("findNewWindowItem", () =>
+		findNewWindowItem(fileMenuItems, fileMenuItemsRef)
+	);
 	const windowTitle = step("newWindowItem.name()", () => newWindowItem.name() || "");
 	const profileMenus = step("newWindowItem.menus()", () => newWindowItem.menus());
 
