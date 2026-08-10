@@ -75,7 +75,7 @@ Browse your recent Safari browsing history and search by title or URL.
 
 <img src="img/swp.png" alt="Alfred Safari profiles" width="570"/>
 
-List and open Safari windows using up to 5 customizable profiles (e.g., work, personal, school).
+List and open Safari windows using up to 9 profiles (e.g., work, personal, school).
 
 - **Keyword:** `swp`
 
@@ -85,12 +85,10 @@ Use `sw p[number]` to instantly open a new Safari window with the selected profi
 
 | Command         | Description                                                                 |
 |-----------------|-----------------------------------------------------------------------------|
-| `swp`           | Lists available profiles (Profile 1, …, Profile 5).                |
+| `swp`           | Lists available profiles (Profile 1, …, Profile 9).                |
 | `sw p1`        | Opens a new Safari window using Profile 1.                                 |
 | `sw p2`        | Opens a new Safari window using Profile 2.                                 |
 | `sw p3`        | Opens a new Safari window using Profile 3.                                 |
-
-**Note:** Profiles without assigned names in the workflow configuration will not appear in the list, allowing for a cleaner interface with only the profiles that are actually used.
 
 ## Customization
 
