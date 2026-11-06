@@ -1,11 +1,18 @@
 const Safari = Application("Safari");
 const SystemEvents = Application("System Events");
 
+// Set to true to print per-step timings to stderr (visible in Alfred's debugger).
+const DEBUG = false;
+const t0 = Date.now();
+function lap(label) {
+	if (DEBUG) console.log(`${label}: ${Date.now() - t0}ms`);
+}
+
 // Safari appends/wraps the profile name onto the "New Window" title
 // depending on locale. Strip a leftover connector word (e.g. Spanish "de")
 // when there's no shared suffix to delimit the name.
 function stripLeadingConnector(candidate) {
-	return candidate.replace(/^[\s\-–—:()"“”]*[a-zà-öø-ÿ]{1,4}\s+(?=[A-ZÀ-Ö0-9])/, "");
+	return candidate.replace(/^[\s\-–—:()"“”]*[a-zà-öø-ÿ]{1,4}\s+(?=\S)/, "");
 }
 
 // Extracts the profile name from `profileWindowTitle` by removing whatever
@@ -53,11 +60,14 @@ function message(title, subtitle) {
 // Reads the keyboard shortcut of a menu item through the accessibility
 // attributes. Locale-independent, unlike the item titles.
 // AXMenuItemCmdModifiers bitmask: 1 = ⇧, 2 = ⌥, 4 = ⌃, 8 = no ⌘ (0 = ⌘ only).
+// The modifiers are only queried when the key is "N" (saves one Apple Event
+// for every other item while scanning).
 function readShortcut(item) {
 	try {
-		const ch = item.attributes.byName("AXMenuItemCmdChar").value();
+		const ch = String(item.attributes.byName("AXMenuItemCmdChar").value() || "").toUpperCase();
+		if (ch !== "N") return { ch, mod: null };
 		const mod = item.attributes.byName("AXMenuItemCmdModifiers").value();
-		return { ch: ch ? String(ch).toUpperCase() : "", mod: typeof mod === "number" ? mod : null };
+		return { ch, mod: typeof mod === "number" ? mod : null };
 	} catch (e) {
 		return { ch: "", mod: null };
 	}
@@ -97,51 +107,55 @@ function step(label, fn) {
 	}
 }
 
+// Launches Safari if needed and polls until its menu bar is available,
+// instead of sleeping a fixed amount of time (max ~3 s).
+function ensureSafariReady() {
+	if (Safari.running()) return;
+	Safari.launch();
+	for (let i = 0; i < 20; i++) {
+		delay(0.15);
+		try {
+			if (SystemEvents.processes.byName("Safari").menuBars[0].menuBarItems.name().length > 2) return;
+		} catch (e) {
+			// Menu bar not ready yet; keep polling.
+		}
+	}
+}
+
 let output;
 
 try {
-	if (!Safari.running()) {
-		Safari.launch();
-		delay(0.8);
-	}
+	ensureSafariReady();
+	lap("safari ready");
 
-	const process = step("processes.byName", () => SystemEvents.processes.byName("Safari"));
-	const menuBarItemsRef = process.menuBars[0].menuBarItems;
-	const menuBarItemsArray = step("menuBars[0].menuBarItems", () => menuBarItemsRef());
-	if (!menuBarItemsArray.length) throw new Error("menuBarItems is empty");
+	// Lazy specifier straight to the File menu. Position 2 (Apple, Safari, File)
+	// is the same in every language, so there is no need to resolve it by name
+	// ("File" fails on non-English systems) or to materialize the whole menu bar.
+	const fileMenu = step("fileMenu", () =>
+		SystemEvents.processes.byName("Safari").menuBars[0].menuBarItems[2].menus[0]
+	);
 
-	// byName("File") returns a specifier lazily: it won't throw until
-	// resolved, so force resolution here to detect non-English locales.
-	// Capture the name in the same call instead of asking again later.
-	let fileMenuItem = null;
-	let fileMenuItemName = null;
-	try {
-		const candidate = menuBarItemsRef.byName("File");
-		fileMenuItemName = candidate.name();
-		fileMenuItem = candidate;
-	} catch (e) {
-		fileMenuItem = null;
-	}
+	// All titles in a single Apple Event instead of one .name() call per item.
+	const allTitles = step("menuItems.name()", () =>
+		fileMenu.menuItems.name().map((t) => t || "")
+	);
+	if (!allTitles.length) throw new Error("File menu has 0 menuItems");
+	lap("titles");
 
-	const resolvedFileMenuItem = fileMenuItem || menuBarItemsArray[2];
-	if (!fileMenuItem) {
-		fileMenuItemName = step("fileMenuItem.name()", () => resolvedFileMenuItem.name());
-	}
-	const fileMenu = step("fileMenuItem.menus()[0]", () => resolvedFileMenuItem.menus()[0]);
-
-	const fileMenuItems = step("fileMenu.menuItems()", () => fileMenu.menuItems());
-	if (!fileMenuItems.length) throw new Error(`fileMenu (name="${fileMenuItemName}") has 0 menuItems`);
+	// Specifiers, only used to read shortcuts / submenus.
+	const fileMenuItems = step("menuItems()", () => fileMenu.menuItems());
 
 	const { newIdx, privIdx } = step("locateWindowItems", () => locateWindowItems(fileMenuItems));
 	if (newIdx < 0) {
-		throw new Error(`"New Window" item (⌘N) not found in menu "${fileMenuItemName}"`);
+		throw new Error(`"New Window" item (⌘N) not found in the File menu`);
 	}
+	lap("located");
 
-	const newWindowItem = fileMenuItems[newIdx];
-	const windowTitle = step("newWindowItem.name()", () => newWindowItem.name() || "");
-	const subMenus = step("newWindowItem.menus()", () => newWindowItem.menus());
+	const windowTitle = allTitles[newIdx];
 
 	let profiles = [];
+
+	const subMenus = step("newWindowItem.menus()", () => fileMenuItems[newIdx].menus());
 
 	if (subMenus.length) {
 		// Legacy layout (macOS <= 26): profiles live in the "New Window" submenu.
@@ -159,9 +173,8 @@ try {
 		if (privIdx <= newIdx) {
 			throw new Error("Private Window item (⇧⌘N) not found after ⌘N; can't delimit profiles");
 		}
-		const privateTitle = step("privateItem.name()", () => fileMenuItems[privIdx].name() || "");
-		const block = fileMenuItems.slice(newIdx, privIdx);
-		const titles = step("block names", () => block.map((it) => it.name() || ""));
+		const privateTitle = allTitles[privIdx];
+		const titles = allTitles.slice(newIdx, privIdx);
 
 		// idx is the array position and the pN Safari opens natively (⌥⇧⌘+N).
 		profiles = titles
@@ -172,16 +185,18 @@ try {
 			}))
 			.filter((p) => p.menuTitle && p.name);
 	}
+	lap("profiles parsed");
 
 	if (!profiles.length) {
 		output = message("No Safari profiles found", "Create a profile in Safari Settings › Profiles");
 	} else {
 		output = {
-			cache: { seconds: 300, loosereload: true },
-			items: profiles.map(({ idx, name, menuTitle }) => ({
+			cache: { seconds: 3600, loosereload: true },
+			items: profiles.map(({ idx, name }) => ({
 				title: name,
+				subtitle: "Open a new window in this profile",
 				autocomplete: name,
-				match: `${name} ${menuTitle}`,
+				match: name,
 				arg: `p${idx}`,
 				valid: true,
 			})),
